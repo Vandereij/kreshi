@@ -1,6 +1,7 @@
 ---
 // src/pages/auth/login.astro
 import "@/styles/global.css";
+import loginClientUrl from '../../scripts/auth/login.client.ts?url'; 
 ---
 
 <html lang="en">
@@ -52,56 +53,6 @@ import "@/styles/global.css";
 			</form>
 		</main>
 
-		<script type="module">
-			import { browserSupabase } from "../../lib/supabaseClient";
-			const supabase = browserSupabase();
-
-			const form = document.getElementById("login-form");
-			const msg = document.getElementById("msg");
-			const loginBtn = document.getElementById("login-btn");
-			const magicBtn = document.getElementById("magic");
-
-			const redirectTo = `${window.location.origin}/auth/callback`;
-
-			loginBtn.addEventListener("click", async () => {
-				const fd = new FormData(form);
-				const email = fd.get("email");
-				const password = fd.get("password");
-				msg.textContent = "Signing in…";
-				try {
-					const { error } = await supabase.auth.signInWithPassword({
-						email,
-						password,
-					});
-					if (error) throw error;
-					window.location.replace("/app/checkin");
-				} catch (e) {
-					msg.textContent = e.message ?? "Login failed";
-					console.error(e);
-				}
-			});
-
-			magicBtn.addEventListener("click", async () => {
-				const email = (new FormData(form).get("email") || "")
-					.toString()
-					.trim();
-				if (!email) {
-					msg.textContent = "Enter your email first.";
-					return;
-				}
-				msg.textContent = "Sending magic link…";
-				try {
-					const { error } = await supabase.auth.signInWithOtp({
-						email,
-						options: { emailRedirectTo: redirectTo },
-					});
-					if (error) throw error;
-					msg.textContent = "Magic link sent. Check your email.";
-				} catch (e) {
-					msg.textContent = e.message ?? "Could not send magic link";
-					console.error(e);
-				}
-			});
-		</script>
+    <script type="module" src={loginClientUrl}></script>
 	</body>
 </html>

@@ -1,5 +1,6 @@
 ---
 import "@/styles/global.css";
+import callbackClientUrl from "../../scripts/auth/callback.client.ts?url";
 ---
 
 <html lang="en">
@@ -10,20 +11,6 @@ import "@/styles/global.css";
 	</head>
 	<body class="p-6">
 		<p>Signing you in…</p>
-		<script type="module">
-			import { browserSupabase } from "../../lib/supabaseClient";
-			const supabase = browserSupabase();
-
-			// Give Supabase a tick to parse URL hash/code and set the session.
-			setTimeout(async () => {
-				const {
-					data: { session },
-					error,
-				} = await supabase.auth.getSession();
-				if (error) console.warn(error);
-				// Optional: handle error UX here
-				window.location.replace("/app/checkin");
-			}, 0);
-		</script>
+		<script type="module" src={callbackClientUrl}></script>
 	</body>
 </html>
