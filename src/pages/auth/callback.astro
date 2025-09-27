@@ -1,0 +1,22 @@
+---
+// src/pages/auth/callback.astro
+import '@/styles/global.css';
+---
+<html lang="en">
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Signing you in…</title></head>
+  <body class="p-6">
+    <p>Signing you in…</p>
+    <script type="module">
+      import { browserSupabase } from '@/lib/supabaseClient'
+      const supabase = browserSupabase()
+
+      // v2 handles hash/code automatically if detectSessionInUrl: true
+      // Give it a tick to parse the URL, then bounce somewhere useful.
+      setTimeout(async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        // You can inspect session here if needed.
+        window.location.replace('/app/checkin')
+      }, 0)
+    </script>
+  </body>
+</html>
