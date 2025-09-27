@@ -1,7 +1,7 @@
 ---
+// src/pages/auth/login.astro
 import '@/styles/global.css';
 ---
-
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -12,18 +12,14 @@ import '@/styles/global.css';
     <main class="max-w-md mx-auto p-6 space-y-6">
       <h1 class="text-3xl font-semibold text-center">Welcome back</h1>
 
-      <form id="login-form" class="card p-4 space-y-3">
+      <!-- Remove action/method; use JS-only buttons -->
+      <form id="login-form" class="card p-4 space-y-3" autocomplete="on">
         <input name="email" type="email" placeholder="Email" class="w-full p-3 rounded-xl border border-slate-300" required />
         <input name="password" type="password" placeholder="Password" class="w-full p-3 rounded-xl border border-slate-300" required />
-        <button class="w-full px-4 py-3 rounded-2xl bg-slate-900 text-white">Log in</button>
+        <button type="button" id="login-btn" class="w-full px-4 py-3 rounded-2xl bg-slate-900 text-white">Log in</button>
 
         <div class="text-sm text-slate-600 text-center">— or —</div>
-
-        <!-- Optional: Magic link sign-in -->
         <button type="button" id="magic" class="w-full px-4 py-3 rounded-2xl border">Send me a magic link</button>
-
-        <!-- Optional: OAuth (example: Google) -->
-        <!-- <button type="button" id="google" class="w-full px-4 py-3 rounded-2xl border">Continue with Google</button> -->
 
         <p class="text-sm text-slate-600">No account? <a href="/auth/signup" class="underline">Sign up</a></p>
         <div id="msg" class="text-sm"></div>
@@ -36,46 +32,39 @@ import '@/styles/global.css';
 
       const form = document.getElementById('login-form')
       const msg = document.getElementById('msg')
+      const loginBtn = document.getElementById('login-btn')
       const magicBtn = document.getElementById('magic')
-      // const googleBtn = document.getElementById('google')
 
       const redirectTo = `${window.location.origin}/auth/callback`
 
-      // Email + password
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault()
+      loginBtn.addEventListener('click', async () => {
         const fd = new FormData(form)
         const email = fd.get('email')
         const password = fd.get('password')
-
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) {
-          msg.textContent = error.message
-          return
+        msg.textContent = 'Signing in…'
+        try {
+          const { error } = await supabase.auth.signInWithPassword({ email, password })
+          if (error) throw error
+          window.location.replace('/app/checkin')
+        } catch (e) {
+          msg.textContent = e.message ?? 'Login failed'
+          console.error(e)
         }
-        window.location.replace('/app/checkin')
       })
 
-      // Magic link (optional)
-      magicBtn?.addEventListener('click', async () => {
+      magicBtn.addEventListener('click', async () => {
         const email = (new FormData(form).get('email') || '').toString().trim()
-        if (!email) {
-          msg.textContent = 'Enter your email first.'
-          return
+        if (!email) { msg.textContent = 'Enter your email first.'; return }
+        msg.textContent = 'Sending magic link…'
+        try {
+          const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } })
+          if (error) throw error
+          msg.textContent = 'Magic link sent. Check your email.'
+        } catch (e) {
+          msg.textContent = e.message ?? 'Could not send magic link'
+          console.error(e)
         }
-        const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } })
-        if (error) { msg.textContent = error.message; return }
-        msg.textContent = 'Magic link sent. Check your email.'
       })
-
-      // OAuth (optional)
-      // googleBtn?.addEventListener('click', async () => {
-      //   const { error } = await supabase.auth.signInWithOAuth({
-      //     provider: 'google',
-      //     options: { redirectTo }
-      //   })
-      //   if (error) msg.textContent = error.message
-      // })
     </script>
   </body>
 </html>
