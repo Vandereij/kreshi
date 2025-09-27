@@ -11,7 +11,7 @@ import '@/styles/global.css';
   <body class="p-6">
     <p>Signing you in…</p>
     <script type="module">
-      import { browserSupabase } from '/src/lib/supabaseClient'
+      import { browserSupabase } from '/src/lib/supabaseClient.ts'
       const supabase = browserSupabase()
 
       // Give Supabase a tick to parse URL hash/code and set the session.

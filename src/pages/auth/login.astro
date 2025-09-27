@@ -27,7 +27,7 @@ import '@/styles/global.css';
     </main>
 
     <script type="module">
-      import { browserSupabase } from '/src/lib/supabaseClient'
+      import { browserSupabase } from '/src/lib/supabaseClient.ts'
       const supabase = browserSupabase()
 
       const form = document.getElementById('login-form')
