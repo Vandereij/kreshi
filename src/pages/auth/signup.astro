@@ -1,70 +1,94 @@
 ---
-import '@/styles/global.css';
+import "@/styles/global.css";
 ---
 
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Sign up • SoulLog</title>
-  </head>
-  <body>
-    <main class="max-w-md mx-auto p-6 space-y-6">
-      <h1 class="text-3xl font-semibold text-center">Create your account</h1>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Sign up • SoulLog</title>
+	</head>
+	<body>
+		<main class="max-w-md mx-auto p-6 space-y-6">
+			<h1 class="text-3xl font-semibold text-center">
+				Create your account
+			</h1>
 
-      <form id="signup-form" class="card p-4 space-y-3">
-        <input name="full_name" type="text" placeholder="Full name (optional)" class="w-full p-3 rounded-xl border border-slate-300" />
-        <input name="email" type="email" placeholder="Email" class="w-full p-3 rounded-xl border border-slate-300" required />
-        <input name="password" type="password" placeholder="Password" class="w-full p-3 rounded-xl border border-slate-300" required />
-        <button class="w-full px-4 py-3 rounded-2xl bg-slate-900 text-white">Create account</button>
+			<form id="signup-form" class="card p-4 space-y-3">
+				<input
+					name="full_name"
+					type="text"
+					placeholder="Full name (optional)"
+					class="w-full p-3 rounded-xl border border-slate-300"
+				/>
+				<input
+					name="email"
+					type="email"
+					placeholder="Email"
+					class="w-full p-3 rounded-xl border border-slate-300"
+					required
+				/>
+				<input
+					name="password"
+					type="password"
+					placeholder="Password"
+					class="w-full p-3 rounded-xl border border-slate-300"
+					required
+				/>
+				<button
+					class="w-full px-4 py-3 rounded-2xl bg-slate-900 text-white"
+					>Create account</button
+				>
 
-        <p class="text-sm text-slate-600">
-          Already have one? <a href="/auth/login" class="underline">Log in</a>
-        </p>
+				<p class="text-sm text-slate-600">
+					Already have one? <a href="/auth/login" class="underline"
+						>Log in</a
+					>
+				</p>
 
-        <div class="text-xs text-slate-600">
-          This password derives your encryption key. Keep it safe.
-        </div>
+				<div class="text-xs text-slate-600">
+					This password derives your encryption key. Keep it safe.
+				</div>
 
-        <div id="msg" class="text-sm"></div>
-      </form>
-    </main>
+				<div id="msg" class="text-sm"></div>
+			</form>
+		</main>
 
-    <script type="module">
-      import { browserSupabase } from '/src/lib/supabaseClient.ts'
-      const supabase = browserSupabase()
+		<script type="module">
+			import { browserSupabase } from "../../lib/supabaseClient";
+			const supabase = browserSupabase();
 
-      const form = document.getElementById('signup-form')
-      const msg = document.getElementById('msg')
+			const form = document.getElementById("signup-form");
+			const msg = document.getElementById("msg");
 
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault()
-        const fd = new FormData(form)
+			form.addEventListener("submit", async (e) => {
+				e.preventDefault();
+				const fd = new FormData(form);
 
-        const full_name = fd.get('full_name') || null
-        const email = fd.get('email')
-        const password = fd.get('password')
+				const full_name = fd.get("full_name") || null;
+				const email = fd.get("email");
+				const password = fd.get("password");
 
-        // IMPORTANT: Redirect back to your site on Netlify after email confirmation
-        const redirectTo = `${window.location.origin}/auth/callback`
+				// IMPORTANT: Redirect back to your site on Netlify after email confirmation
+				const redirectTo = `${window.location.origin}/auth/callback`;
 
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name },
-            emailRedirectTo: redirectTo,
-          },
-        })
+				const { error } = await supabase.auth.signUp({
+					email,
+					password,
+					options: {
+						data: { full_name },
+						emailRedirectTo: redirectTo,
+					},
+				});
 
-        if (error) {
-          msg.textContent = error.message
-          return
-        }
+				if (error) {
+					msg.textContent = error.message;
+					return;
+				}
 
-        msg.textContent = 'Check your email to confirm your account.'
-        setTimeout(() => (window.location.href = '/auth/login'), 800)
-      })
-    </script>
-  </body>
+				msg.textContent = "Check your email to confirm your account.";
+				setTimeout(() => (window.location.href = "/auth/login"), 800);
+			});
+		</script>
+	</body>
 </html>
