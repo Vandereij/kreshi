@@ -15,9 +15,11 @@ import '../../styles/global.css';
     </section>
   </main>
   <script type="module">
-    import { supabase } from '/src/lib/supabaseClient.ts'
+    import { browserSupabase } from '/src/lib/supabaseClient.ts'
     import { deriveRootKey, unwrapDEK, decryptJSON } from '/src/lib/crypto/e2ee.ts'
     import { getOrCreateSalt } from '/src/lib/crypto/storage.ts'
+    
+    const supabase = browserSupabase()
 
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) location.href = '/auth/login';
