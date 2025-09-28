@@ -1,7 +1,7 @@
 ---
 // src/pages/auth/login.astro
 import "@/styles/global.css";
-import loginClientUrl from '../../scripts/auth/login.client.ts?url'; 
+const loginClientUrl = Astro.resolve('../../scripts/auth/login.client.ts');
 ---
 
 <html lang="en">

@@ -1,6 +1,6 @@
 ---
 import "@/styles/global.css";
-import callbackClientUrl from "../../scripts/auth/callback.client.ts?url";
+const callbackClientUrl = Astro.resolve('../../scripts/auth/callback.client.ts');
 ---
 
 <html lang="en">
