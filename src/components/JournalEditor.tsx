@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Textarea, Button, Group } from '@mantine/core';
+import { Textarea } from '@mantine/core';
 import { IconMicrophone } from '@tabler/icons-react'; // Needs installation
 
 export function JournalEditor() {

@@ -1,7 +1,7 @@
 // src/components/AiInsightCard.tsx
 'use client';
 
-import { Paper, Text, Anchor, Group } from '@mantine/core';
+import { Paper, Text, Anchor } from '@mantine/core';
 import { IconBulb } from '@tabler/icons-react'; // Needs @tabler/icons-react
 
 export function AiInsightCard() {

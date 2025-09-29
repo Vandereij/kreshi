@@ -47,7 +47,7 @@ export default function HomePage() {
           {/* --- Journaling Section --- */}
           <Paper shadow="sm" p="md" radius="md">
             <Title order={4} mb="xs" fw={600}> {/* Changed order to 4 */}
-              What's on your mind?
+              What&apos;s on your mind?
             </Title>
             <JournalEditor />
           </Paper>
