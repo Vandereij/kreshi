@@ -2,6 +2,7 @@
 'use client';
 
 import { MantineProvider, createTheme } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 
 // Define a custom theme
 const theme = createTheme({
@@ -32,11 +33,9 @@ const theme = createTheme({
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <MantineProvider
-      theme={theme}
-      // The color scheme is now set here, on the provider itself
-      defaultColorScheme="light"
-    >
+    <MantineProvider theme={theme} defaultColorScheme="light">
+      {/* 2. Add the Notifications provider here */}
+      <Notifications />
       {children}
     </MantineProvider>
   );

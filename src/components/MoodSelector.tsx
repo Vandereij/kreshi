@@ -1,8 +1,6 @@
-// src/components/MoodSelector.tsx (Corrected)
-
+// src/components/MoodSelector.tsx
 'use client';
 
-import { useState } from 'react';
 import { UnstyledButton, Text, Group } from '@mantine/core';
 
 const moods = [
@@ -13,15 +11,22 @@ const moods = [
     { emoji: '😞', label: 'Awful', value: 'awful' },
 ];
 
-export function MoodSelector() {
-  const [selectedMood, setSelectedMood] = useState<string | null>(null);
+// 1. Define props for the component
+interface MoodSelectorProps {
+  value: string | null;
+  onChange: (mood: string | null) => void;
+}
+
+export function MoodSelector({ value, onChange }: MoodSelectorProps) {
+  // 2. We no longer use useState here. The state is passed in via props.
 
   return (
     <Group gap="xs" wrap="wrap" grow>
       {moods.map((mood) => (
         <UnstyledButton
           key={mood.value}
-          onClick={() => setSelectedMood(mood.value)}
+          // 3. Call the onChange function from props
+          onClick={() => onChange(mood.value)}
           style={(theme) => ({
             display: 'flex',
             flexDirection: 'column',
@@ -30,14 +35,13 @@ export function MoodSelector() {
             padding: theme.spacing.sm,
             borderRadius: theme.radius.xl,
             border: `1px solid ${theme.colors.gray[3]}`,
-            // THE FIX IS HERE: Replaced theme.fn.primaryColor(0)
-            backgroundColor: selectedMood === mood.value ? theme.colors[theme.primaryColor][0] : 'transparent',
+            // 4. Check against the `value` prop
+            backgroundColor: value === mood.value ? theme.colors[theme.primaryColor][0] : 'transparent',
             transition: 'all 0.1s ease',
             flex: '1 1 0%',
             minWidth: '60px',
-            transform: selectedMood === mood.value ? 'scale(1.05)' : 'scale(1)',
+            transform: value === mood.value ? 'scale(1.05)' : 'scale(1)',
             '&:hover': {
-              // AND ALSO HERE
               backgroundColor: theme.colors.gray[1],
               transform: 'scale(1.02)',
             },

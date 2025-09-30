@@ -1,41 +1,40 @@
-// src/components/SpecificFeelingsSelector.tsx (Corrected)
+// src/components/SpecificFeelingsSelector.tsx
 'use client';
 
-import { useState } from 'react';
 import { Button, Group } from '@mantine/core';
 
 const feelings = [
   'Anxious', 'Stressed', 'Happy', 'Grateful', 'Tired', 'Hopeful', 'Irritated'
 ];
 
-export function SpecificFeelingsSelector() {
-  const [selectedFeelings, setSelectedFeelings] = useState<string[]>([]);
+// 1. Define props
+interface SpecificFeelingsSelectorProps {
+  value: string[];
+  onChange: (feelings: string[]) => void;
+}
+
+export function SpecificFeelingsSelector({ value, onChange }: SpecificFeelingsSelectorProps) {
+  // 2. Remove useState. State is controlled by the parent.
 
   const toggleFeeling = (feeling: string) => {
-    setSelectedFeelings((current) =>
-      current.includes(feeling)
-        ? current.filter((f) => f !== feeling)
-        : [...current, feeling]
-    );
+    // 3. Create the new array and pass it to the onChange prop
+    const newValue = value.includes(feeling)
+      ? value.filter((f) => f !== feeling)
+      : [...value, feeling];
+    onChange(newValue);
   };
 
   return (
-    // THE FIX IS HERE: 'spacing' has been renamed to 'gap'
     <Group gap="xs" wrap="wrap">
       {feelings.map((feeling) => (
         <Button
           key={feeling}
-          variant={selectedFeelings.includes(feeling) ? 'filled' : 'light'}
-          color={selectedFeelings.includes(feeling) ? 'blue' : 'gray'}
+          // 4. Check against the `value` prop
+          variant={value.includes(feeling) ? 'filled' : 'light'}
+          color={value.includes(feeling) ? 'blue' : 'gray'}
           radius="xl"
           onClick={() => toggleFeeling(feeling)}
           size="sm"
-          style={(theme) => ({
-            transition: 'all 0.1s ease',
-            '&:hover': {
-              transform: 'scale(1.02)',
-            },
-          })}
         >
           {feeling}
         </Button>

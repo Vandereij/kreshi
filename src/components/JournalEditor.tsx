@@ -1,28 +1,37 @@
 // src/components/JournalEditor.tsx
-
 'use client';
 
-import { Textarea } from '@mantine/core';
-import { IconMicrophone } from '@tabler/icons-react'; // Needs installation
+import { Textarea, Button, Group } from '@mantine/core';
+import { IconMicrophone } from '@tabler/icons-react';
 
-export function JournalEditor() {
+// 1. Define props
+interface JournalEditorProps {
+  value: string;
+  onChange: (content: string) => void;
+  onSave: () => void;
+  loading: boolean;
+}
+
+export function JournalEditor({ value, onChange, onSave, loading }: JournalEditorProps) {
   return (
     <>
       <Textarea
-        placeholder="I felt neutral because..." // Updated placeholder
-        label="Your journal entry" // Label changed to 'Your journal entry' if needed, or removed if the title handles it
-        // description="The more detail, the better the AI can help." // Removed as per image
+        placeholder="I felt this way because..."
         autosize
         minRows={4}
+        // 2. Use props for value and onChange
+        value={value}
+        onChange={(event) => onChange(event.currentTarget.value)}
         rightSection={
           <IconMicrophone size={20} style={{ display: 'block', opacity: 0.7, cursor: 'pointer' }} />
         }
-        rightSectionPointerEvents="all" // Make the icon clickable
       />
-      {/* Save Entry button could be moved or removed based on the final UX */}
-      {/* <Group justify="flex-end" mt="md">
-        <Button>Save Entry</Button>
-      </Group> */}
+      <Group justify="flex-end" mt="md">
+        {/* 3. Use the onSave prop for the button's onClick handler */}
+        <Button onClick={onSave} loading={loading}>
+          Save Entry
+        </Button>
+      </Group>
     </>
   );
 }
