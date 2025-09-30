@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Container, Title, Text, Paper, Stack, Box, Button, Group, Anchor } from '@mantine/core';
+import { Container, Title, Text, Paper, Stack, Box, Button, Group } from '@mantine/core';
 import { notifications } from '@mantine/notifications'; // We'll need to install this
 import { MoodSelector } from '@/components/MoodSelector';
 import { JournalEditor } from '@/components/JournalEditor';
@@ -132,7 +132,7 @@ export default function HomePage() {
 
           <Paper shadow="sm" p="md" radius="md">
             <Title order={4} mb="xs" fw={600}>
-              What's on your mind?
+              What&apos;s on your mind?
             </Title>
             <JournalEditor
               value={content}
