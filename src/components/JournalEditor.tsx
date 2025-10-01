@@ -7,12 +7,18 @@ import { IconMicrophone } from '@tabler/icons-react';
 interface JournalEditorProps {
   value: string;
   onChange: (content: string) => void;
+  moodLabel?: string; 
 }
 
-export function JournalEditor({ value, onChange }: JournalEditorProps) {
+export function JournalEditor({ value, onChange, moodLabel }: JournalEditorProps) {
+  const placeholderText = moodLabel
+    ? `I feel ${moodLabel.toLowerCase()} because...`
+    : 'Describe your thoughts and feelings...';
+
   return (
     <Textarea
-      placeholder="I felt neutral because..."
+      // 3. Apply the dynamic placeholder
+      placeholder={placeholderText}
       autosize
       minRows={4}
       variant="filled"

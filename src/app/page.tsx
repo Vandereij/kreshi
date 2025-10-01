@@ -99,7 +99,11 @@ export default function HomePage() {
           <Stack gap="xs">
             <Title order={4} fw={700}>What's on your mind?</Title>
             <Text size="sm" c="dimmed">Describe your day or what led to this feeling.</Text>
-            <JournalEditor value={content} onChange={setContent} />
+            <JournalEditor
+              value={content}
+              onChange={setContent}
+              moodLabel={selectedMoodObject?.label} // Pass the label here
+            />
           </Stack>
 
           <AiInsightCard />
