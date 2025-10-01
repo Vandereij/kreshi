@@ -12,6 +12,7 @@ import { SpecificFeelingsSelector } from '@/components/SpecificFeelingsSelector'
 import { AiInsightCard } from '@/components/AiInsightCard';
 import { BottomNavBar } from '@/components/BottomNavBar';
 import type { Session } from '@supabase/supabase-js';
+import { AppHeader } from '@/components/AppHeader';
 
 export default function HomePage() {
   const router = useRouter();
@@ -108,13 +109,10 @@ export default function HomePage() {
     >
       <Container size="sm" py="xl">
         <Stack gap="lg">
-          <Group justify="space-between">
-            <Box>
-              <Title order={2} fw={700}>Mood & CBT Companion</Title>
-              <Text size="sm" c="dimmed">Daily Check-in</Text>
-            </Box>
-            <Button variant="light" onClick={handleSignOut}>Sign Out</Button>
-          </Group>
+          <AppHeader
+            title="Mood & CBT Companion"
+            description="Your daily check-in"
+          />
 
           <Title order={3} ta="left" fw={700}>
             How are you feeling today?
