@@ -82,7 +82,7 @@ export default function HomePage() {
             <Title order={3} fw={700}>How are you feeling today?</Title>
             <MoodSelector value={mood} onChange={setMood} />
             <Collapse in={!!selectedMoodObject}>
-              <Text ta="center" size="lg" fw={600}>
+              <Text ta="center" size="md" fw={600}>
                 {selectedMoodObject?.label}
               </Text>
             </Collapse>
