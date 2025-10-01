@@ -4,13 +4,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Container, Title, Text, Stack, Box, Button } from '@mantine/core';
+import { Container, Title, Text, Stack, Box, Button, Collapse } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { MoodSelector } from '@/components/MoodSelector';
 import { JournalEditor } from '@/components/JournalEditor';
 import { SpecificFeelingsSelector } from '@/components/SpecificFeelingsSelector';
 import { AiInsightCard } from '@/components/AiInsightCard';
 import { BottomNavBar } from '@/components/BottomNavBar';
+import { moods } from '@/data/moods';
 import type { Session } from '@supabase/supabase-js';
 
 export default function HomePage() {
@@ -64,6 +65,8 @@ export default function HomePage() {
     return null; // Or a loading spinner
   }
 
+  const selectedMoodObject = moods.find((m) => m.value === mood);
+
   return (
     <Box style={{ paddingBottom: '90px' }}> {/* Space for bottom nav + save button */}
       <Container size="sm" py="xl">
@@ -75,10 +78,16 @@ export default function HomePage() {
           </Box>
 
           {/* How are you feeling? Section */}
-          <Stack gap="xs">
+          <Stack gap="md"> {/* Use a slightly smaller gap for this internal block */}
             <Title order={3} fw={700}>How are you feeling today?</Title>
             <MoodSelector value={mood} onChange={setMood} />
+            <Collapse in={!!selectedMoodObject}>
+              <Text ta="center" size="lg" fw={600}>
+                {selectedMoodObject?.label}
+              </Text>
+            </Collapse>
           </Stack>
+
 
           {/* Specific Feelings Section */}
           <Stack gap="xs">

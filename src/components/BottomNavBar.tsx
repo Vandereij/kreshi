@@ -2,7 +2,7 @@
 'use client';
 
 import { Anchor, Group, Text } from '@mantine/core';
-import { IconHome, IconBook, IconRun, IconChartLine } from '@tabler/icons-react';
+import { IconHome, IconBook, IconRun, IconChartLine, IconUserCircle } from '@tabler/icons-react';
 import { usePathname } from 'next/navigation';
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { icon: IconBook, label: 'Learn', href: '/learn' },
   { icon: IconRun, label: 'Exercises', href: '/exercises' },
   { icon: IconChartLine, label: 'Progress', href: '/progress' },
+  { icon: IconUserCircle, label: 'Settings', href: '/settings' },
 ];
 
 export function BottomNavBar() {
@@ -18,13 +19,13 @@ export function BottomNavBar() {
     <Group
       justify="space-around"
       wrap="nowrap"
-      gap={0} // Remove gap to control spacing with flex
+      gap={0}
       style={(theme) => ({
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        height: '80px', // A bit taller for a better feel
+        height: '80px',
         backgroundColor: theme.colors['brand-beige'][0],
         borderTop: `1px solid ${theme.colors['brand-beige'][2]}`,
         padding: `0 ${theme.spacing.xs}`,
@@ -38,7 +39,7 @@ export function BottomNavBar() {
             key={item.label}
             href={item.href}
             style={(theme) => ({
-              flex: 1, // Make each item take up equal space
+              flex: 1,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
