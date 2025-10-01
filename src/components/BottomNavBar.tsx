@@ -1,4 +1,4 @@
-// src/components/BottomNavBar.tsx (Corrected)
+// src/components/BottomNavBar.tsx
 'use client';
 
 import { Anchor, Group, Text } from '@mantine/core';
@@ -14,52 +14,46 @@ const navItems = [
 
 export function BottomNavBar() {
   const pathname = usePathname();
-
   return (
     <Group
-      justify="space-between"
+      justify="space-around"
       wrap="nowrap"
+      gap={0} // Remove gap to control spacing with flex
       style={(theme) => ({
-        position: 'fixed',
+        position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        height: '60px',
-        backgroundColor: theme.white,
-        borderTop: `1px solid ${theme.colors.gray[2]}`,
-        padding: `0 ${theme.spacing.md}`,
-        zIndex: 1000,
-        boxShadow: theme.shadows.sm,
-        // THE FIX IS HERE: Replaced theme.fn.smallerThan with a standard media query
-        [`@media (maxWidth: ${theme.breakpoints.sm})`]: {
-          padding: `0 ${theme.spacing.xs}`,
-        },
+        height: '80px', // A bit taller for a better feel
+        backgroundColor: theme.colors['brand-beige'][0],
+        borderTop: `1px solid ${theme.colors['brand-beige'][2]}`,
+        padding: `0 ${theme.spacing.xs}`,
       })}
     >
       {navItems.map((item) => {
         const isActive = pathname === item.href;
         const Icon = item.icon;
-
         return (
           <Anchor
             key={item.label}
             href={item.href}
-            variant="text"
             style={(theme) => ({
+              flex: 1, // Make each item take up equal space
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
+              justifyContent: 'center',
               textDecoration: 'none',
-              color: isActive ? theme.colors.blue[6] : theme.colors.gray[6],
-              fontWeight: isActive ? 600 : 400,
+              color: isActive ? theme.black : theme.colors.gray[6],
+              fontWeight: isActive ? 700 : 400,
+              height: '100%',
+              borderRadius: theme.radius.sm,
               '&:hover': {
-                color: theme.colors.blue[5],
+                backgroundColor: theme.colors['brand-beige'][1],
               },
-              transform: isActive ? 'scale(1.05)' : 'scale(1)',
-              transition: 'all 0.1s ease',
             })}
           >
-            <Icon size={24} stroke={1.5} />
+            <Icon size={24} stroke={isActive ? 2 : 1.5} />
             <Text size="xs" mt={4}>{item.label}</Text>
           </Anchor>
         );

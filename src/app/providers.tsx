@@ -1,41 +1,57 @@
-// src/app/providers.tsx
+// src/app/providers.tsx (Corrected)
 'use client';
 
-import { MantineProvider, createTheme } from '@mantine/core';
+// 1. Import MantineTheme alongside the other imports
+import { MantineProvider, createTheme, MantineTheme } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 
-// Define a custom theme
 const theme = createTheme({
-  // Use the font from layout.tsx
   fontFamily: 'Nunito, sans-serif',
   headings: { fontFamily: 'Nunito, sans-serif' },
-  // Softer primary color
-  primaryColor: 'teal', // Or try 'indigo', 'blue' with specific shades
+
   colors: {
-    // Customizing the default 'teal' palette for a softer look if needed
-    // 'teal': ['#e3fdf5', '#d2f9eb', '#c2f6e1', '#b1f3d8', '#a1f0ce', '#91edc4', '#80eac0', '#70e7b6', '#60e4ac', '#50e1a2'],
+    'brand-beige': [
+      '#F9F5F0', '#F3ECE4', '#EEDDD8', '#E8CFCC', '#E2C1BF',
+      '#DBB3B3', '#D5A5A6', '#CFA79A', '#C8998D', '#C28B81'
+    ],
+    'brand-charcoal': [
+      '#E8E8E8', '#D1D1D1', '#BABABA', '#A3A3A3', '#8C8C8C',
+      '#757575', '#5E5E5E', '#474747', '#303030', '#1C1C1C'
+    ],
   },
-  // Softer rounded corners everywhere
-  radius: {
-    xs: '4px',
-    sm: '8px',
-    md: '12px',
-    lg: '16px',
-    xl: '20px',
-  },
-  shadows: {
-    // Custom shadows for cards
-    sm: '0 1px 3px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.05)',
-    md: '0 4px 6px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.06)',
-    lg: '0 10px 15px rgba(0,0,0,.1), 0 4px 6px rgba(0,0,0,.05)',
+  
+  primaryColor: 'brand-charcoal',
+  white: '#FFFFFF',
+  black: '#1C1C1C',
+
+  components: {
+    Paper: {
+      defaultProps: {
+        bg: 'white',
+        shadow: 'sm',
+        p: 'md',
+        radius: 'md',
+        withBorder: true,
+      },
+      // 2. Add the MantineTheme type to the 'theme' parameter
+      styles: (theme: MantineTheme) => ({
+        root: {
+          borderColor: theme.colors['brand-beige'][2],
+        },
+      }),
+    },
+    Button: {
+      defaultProps: {
+        radius: 'xl',
+      },
+    },
   },
 });
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <MantineProvider theme={theme} defaultColorScheme="light">
-      {/* 2. Add the Notifications provider here */}
-      <Notifications />
+      <Notifications position="top-right" />
       {children}
     </MantineProvider>
   );

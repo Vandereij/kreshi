@@ -3,51 +3,41 @@
 
 import { UnstyledButton, Text, Group } from '@mantine/core';
 
+// Emojis and their specific background colors from the design
 const moods = [
-    { emoji: '😊', label: 'Great', value: 'great' },
-    { emoji: '🙂', label: 'Good', value: 'good' },
-    { emoji: '😐', label: 'Okay', value: 'okay' },
-    { emoji: '🙁', label: 'Bad', value: 'bad' },
-    { emoji: '😞', label: 'Awful', value: 'awful' },
+  { emoji: '😊', value: 'great', color: '#FFF4D4' },
+  { emoji: '🙂', value: 'good', color: '#FFE6C1' },
+  { emoji: '😐', value: 'okay', color: '#F8D6B7' },
+  { emoji: '🙁', value: 'bad', color: '#F7C6B4' },
+  { emoji: '😞', value: 'awful', color: '#E0EFFF' },
 ];
 
-// 1. Define props for the component
 interface MoodSelectorProps {
   value: string | null;
   onChange: (mood: string | null) => void;
 }
 
 export function MoodSelector({ value, onChange }: MoodSelectorProps) {
-  // 2. We no longer use useState here. The state is passed in via props.
-
   return (
-    <Group gap="xs" wrap="wrap" grow>
+    <Group justify="space-around" grow>
       {moods.map((mood) => (
         <UnstyledButton
           key={mood.value}
-          // 3. Call the onChange function from props
           onClick={() => onChange(mood.value)}
           style={(theme) => ({
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: theme.spacing.sm,
-            borderRadius: theme.radius.xl,
-            border: `1px solid ${theme.colors.gray[3]}`,
-            // 4. Check against the `value` prop
-            backgroundColor: value === mood.value ? theme.colors[theme.primaryColor][0] : 'transparent',
-            transition: 'all 0.1s ease',
-            flex: '1 1 0%',
-            minWidth: '60px',
-            transform: value === mood.value ? 'scale(1.05)' : 'scale(1)',
-            '&:hover': {
-              backgroundColor: theme.colors.gray[1],
-              transform: 'scale(1.02)',
-            },
+            height: '60px',
+            width: '60px',
+            borderRadius: '50%', // Perfect circle
+            backgroundColor: mood.color,
+            border: `2px solid ${value === mood.value ? theme.colors.blue[5] : 'transparent'}`,
+            transition: 'transform 0.2s ease, border-color 0.2s ease',
+            transform: value === mood.value ? 'scale(1.1)' : 'scale(1)',
           })}
         >
-          <Text size="xl" style={{ fontSize: '2.5rem' }}>
+          <Text style={{ fontSize: '2.5rem' }}>
             {mood.emoji}
           </Text>
         </UnstyledButton>
