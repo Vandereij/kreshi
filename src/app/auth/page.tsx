@@ -86,13 +86,15 @@ export default function AuthPage() {
     setLoading(true);
     setError(null);
     setSuccessMessage(null);
+	
+	const redirectURL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000/';
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         // This is the URL the user will be redirected to after clicking the magic link.
         // It must be an absolute URL.
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: redirectURL,
       },
     });
 
