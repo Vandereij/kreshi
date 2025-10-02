@@ -159,7 +159,7 @@ export default function HomePage() {
 							{selectedMoodObject?.label}
 						</Text>
 						<Collapse in={!!selectedMoodObject}>
-							<Title order={4} fw={700}>
+							<Title order={4} fw={700} pb={16}>
 								Add more specific feelings?
 							</Title>
 							<SpecificFeelingsSelector
