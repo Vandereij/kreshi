@@ -18,6 +18,7 @@ import { BottomNavBar } from "@/components/BottomNavBar";
 import { MoodChart } from "@/components/MoodChart";
 import { RecentEntriesList } from "@/components/RecentEntriesList";
 import { IconSettings } from "@tabler/icons-react";
+import { MoodHeatmapCalendar } from "@/components/MoodHeatmapCalendar";
 
 // Define a TypeScript type for our journal entries for type safety
 export interface JournalEntry {
@@ -38,9 +39,10 @@ const moodToValue: { [key: string]: number } = {
 };
 
 export default function ProgressPage() {
-	const [entries, setEntries] = useState<JournalEntry[]>([]);
+	const [allEntries, setAllEntries] = useState<JournalEntry[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
 	useEffect(() => {
 		const fetchEntries = async () => {
@@ -53,7 +55,7 @@ export default function ProgressPage() {
 			if (error) {
 				setError(error.message);
 			} else {
-				setEntries(data as JournalEntry[]);
+				setAllEntries(data as JournalEntry[]);
 			}
 			setLoading(false);
 		};
@@ -61,21 +63,31 @@ export default function ProgressPage() {
 		fetchEntries();
 	}, []);
 
-	// useMemo will only re-calculate the chart data when the `entries` array changes
-	const chartData = useMemo(() => {
-		// Reverse the entries for the chart so time flows from left to right
-		return entries
-			.slice()
-			.reverse()
-			.filter((entry) => entry.mood && moodToValue[entry.mood])
-			.map((entry) => ({
-				date: new Date(entry.created_at).toLocaleDateString("en-US", {
-					month: "short",
-					day: "numeric",
-				}),
-				mood: moodToValue[entry.mood!],
-			}));
-	}, [entries]);
+	const entriesForSelectedDay = useMemo(() => {
+		if (!selectedDate) return [];
+		return allEntries.filter((entry) => {
+			const entryDate = new Date(entry.created_at);
+			return entryDate.toDateString() === selectedDate.toDateString();
+		});
+	}, [allEntries, selectedDate]);
+
+	const handleDayClick = (date: Date | null) => {
+		// If the new date is null, just set the state to null
+		if (!date) {
+			setSelectedDate(null);
+			return;
+		}
+
+		// This logic remains the same
+		if (
+			selectedDate &&
+			date.toDateString() === selectedDate.toDateString()
+		) {
+			setSelectedDate(null);
+		} else {
+			setSelectedDate(date);
+		}
+	};
 
 	if (loading) {
 		return (
@@ -109,40 +121,50 @@ export default function ProgressPage() {
 		<Box style={{ paddingBottom: "80px" }}>
 			<Container size="sm" py="xl">
 				<Stack gap="lg">
-					<Group justify="space-between">
-						<Box>
-							<Title order={2} fw={800}>
-								Your Progress
-							</Title>
-							<Text c="dimmed">
-								Review your journey and find patterns.
-							</Text>
-						</Box>
-						<ActionIcon
-							component="a"
-							href="/settings"
-							variant="subtle"
-							size="lg"
-							aria-label="Settings"
-						>
-							<IconSettings size="1.5rem" color="#5E5E5E" />
-						</ActionIcon>
-					</Group>
+					{/* Header Section */}
+					<Box>
+						<Title order={2} fw={800}>
+							Your Progress
+						</Title>
+						<Text c="dimmed">
+							Review your journey and find patterns.
+						</Text>
+					</Box>
 
-					{entries.length === 0 ? (
+					{allEntries.length === 0 && !loading ? (
 						<Paper ta="center">
-							{" "}
-							{/* Uses default styles */}
 							<Title order={4}>No entries yet!</Title>
 							<Text mt="sm">
-								Your progress chart will appear here once you
-								make a check-in.
+								Your calendar will appear here once you make a
+								check-in.
 							</Text>
 						</Paper>
 					) : (
 						<>
-							<MoodChart data={chartData} />
-							<RecentEntriesList entries={entries} />
+							{/* ---- THIS IS THE FIX ---- */}
+							{/* Pass the selectedDate state down to the calendar component */}
+							<MoodHeatmapCalendar
+								entries={allEntries}
+								onDayClick={handleDayClick}
+								selectedDate={selectedDate}
+							/>
+
+							{/* Conditionally show the list for the selected day */}
+							{selectedDate &&
+								entriesForSelectedDay.length > 0 && (
+									<RecentEntriesList
+										entries={entriesForSelectedDay}
+									/>
+								)}
+
+							{selectedDate &&
+								entriesForSelectedDay.length === 0 && (
+									<Paper ta="center">
+										<Text c="dimmed">
+											No entries found for this day.
+										</Text>
+									</Paper>
+								)}
 						</>
 					)}
 				</Stack>

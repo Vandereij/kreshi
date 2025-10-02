@@ -10,19 +10,9 @@ import {
 	Tooltip,
 	ResponsiveContainer,
 } from "recharts";
-import { Paper, Title, Text } from "@mantine/core";
+import { Paper, Title } from "@mantine/core";
 
-// Define the structure of the data our chart expects
-interface ChartData {
-	date: string;
-	mood: number;
-}
-
-interface MoodChartProps {
-	data: ChartData[];
-}
-
-export function MoodChart({ data }: { data: any[] }) {
+export function MoodChart({ data }: { data: string[] }) {
 	return (
 		<Paper>
 			{" "}
