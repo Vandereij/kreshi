@@ -155,10 +155,10 @@ export default function HomePage() {
 							How are you feeling today?
 						</Title>
 						<MoodSelector value={mood} onChange={setMood} />
+						<Text ta="center" size="md" fw={600}>
+							{selectedMoodObject?.label}
+						</Text>
 						<Collapse in={!!selectedMoodObject}>
-							<Text ta="center" size="md" fw={600}>
-								{selectedMoodObject?.label}
-							</Text>
 							<Title order={4} fw={700}>
 								Add more specific feelings?
 							</Title>
