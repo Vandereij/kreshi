@@ -99,10 +99,7 @@ export default function HomePage() {
 				message: "Your entry has been recorded.",
 				color: "teal",
 			});
-			setMood(null);
-			setFeelings([]);
-			setContent("");
-			resetTranscript();
+			router.push('/progress'); 
 		}
 		setLoading(false);
 	};
