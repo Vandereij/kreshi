@@ -3,13 +3,6 @@
 
 import { UnstyledButton, Group } from '@mantine/core';
 import { moods } from '@/data/moods';
-import {
-  IconMoodHappy,
-  IconMoodSmile,
-  IconMoodSad,
-  IconMoodCry,
-  IconMoodEmpty,
-} from '@tabler/icons-react';
 
 const darkenColor = (hexColor: string, percent: number): string => {
   let hex = hexColor.startsWith('#') ? hexColor.slice(1) : hexColor;
@@ -61,7 +54,7 @@ export function MoodSelector({ value, onChange }: MoodSelectorProps) {
           <UnstyledButton
             key={mood.value}
             onClick={() => onChange(mood.value)}
-            style={(theme) => ({
+            style={() => ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

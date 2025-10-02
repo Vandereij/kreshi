@@ -10,14 +10,10 @@ import {
 	Stack,
 	Box,
 	Loader,
-	Paper,
-	Group,
-	ActionIcon,
+	Paper
 } from "@mantine/core";
 import { BottomNavBar } from "@/components/BottomNavBar";
-import { MoodChart } from "@/components/MoodChart";
 import { RecentEntriesList } from "@/components/RecentEntriesList";
-import { IconSettings } from "@tabler/icons-react";
 import { MoodHeatmapCalendar } from "@/components/MoodHeatmapCalendar";
 
 // Define a TypeScript type for our journal entries for type safety
@@ -28,15 +24,6 @@ export interface JournalEntry {
 	content: string | null;
 	feelings: string[] | null;
 }
-
-// A mapping from mood string to a numerical value for the chart
-const moodToValue: { [key: string]: number } = {
-	awful: 1,
-	bad: 2,
-	okay: 3,
-	good: 4,
-	great: 5,
-};
 
 export default function ProgressPage() {
 	const [allEntries, setAllEntries] = useState<JournalEntry[]>([]);

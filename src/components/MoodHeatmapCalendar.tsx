@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { Calendar } from "@mantine/dates";
-import { Paper, Title, Text, useMantineTheme, ActionIcon } from "@mantine/core";
+import { Paper, Title, Text, useMantineTheme } from "@mantine/core";
 import { IconChevronUp, IconChevronDown } from "@tabler/icons-react";
 import type { JournalEntry } from "@/app/progress/page";
 import type { DayProps } from "@mantine/dates";
