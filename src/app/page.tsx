@@ -1,6 +1,7 @@
 // src/app/page.tsx
 "use client";
 
+import "regenerator-runtime/runtime";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -22,6 +23,9 @@ import { BottomNavBar } from "@/components/BottomNavBar";
 import { moods } from "@/data/moods";
 import { feelingsByMood } from "@/data/feelings";
 import type { Session } from "@supabase/supabase-js";
+import SpeechRecognition, {
+	useSpeechRecognition,
+} from "react-speech-recognition";
 
 export default function HomePage() {
 	const router = useRouter();
@@ -30,6 +34,13 @@ export default function HomePage() {
 	const [feelings, setFeelings] = useState<string[]>([]);
 	const [content, setContent] = useState("");
 	const [loading, setLoading] = useState(false);
+
+	const {
+		transcript,
+		listening,
+		resetTranscript,
+		browserSupportsSpeechRecognition,
+	} = useSpeechRecognition();
 
 	useEffect(() => {
 		supabase.auth.getSession().then(({ data: { session } }) => {
@@ -55,6 +66,10 @@ export default function HomePage() {
 		// This prevents keeping "Happy" selected if the user switches from "Great" to "Awful".
 		setFeelings([]);
 	}, [mood]);
+
+	useEffect(() => {
+		setContent(transcript);
+	}, [transcript]);
 
 	const handleSaveEntry = async () => {
 		if (!session) return;
@@ -87,6 +102,7 @@ export default function HomePage() {
 			setMood(null);
 			setFeelings([]);
 			setContent("");
+			resetTranscript();
 		}
 		setLoading(false);
 	};
@@ -97,6 +113,25 @@ export default function HomePage() {
 
 	const selectedMoodObject = moods.find((m) => m.value === mood);
 	const availableFeelings = mood ? feelingsByMood[mood] : [];
+
+	if (!browserSupportsSpeechRecognition) {
+		return (
+			<Container size="sm" py="xl">
+				<Text c="red">
+					Your browser does not support speech recognition.
+				</Text>
+			</Container>
+		);
+	}
+
+	const handleToggleListening = () => {
+		if (listening) {
+			SpeechRecognition.stopListening();
+		} else {
+			resetTranscript();
+			SpeechRecognition.startListening({ continuous: true });
+		}
+	};
 
 	return (
 		<Box style={{ paddingBottom: "90px" }}>
@@ -147,6 +182,8 @@ export default function HomePage() {
 							value={content}
 							onChange={setContent}
 							moodLabel={selectedMoodObject?.label} // Pass the label here
+							isListening={listening}
+							onToggleListening={handleToggleListening}
 						/>
 					</Stack>
 

@@ -4,10 +4,6 @@
 import { Paper, Title, Text, Accordion, Group, Badge } from "@mantine/core";
 import type { JournalEntry } from "@/app/progress/page"; // We'll create this type next
 
-interface RecentEntriesListProps {
-	entries: JournalEntry[];
-}
-
 // A helper to format the date nicely
 const formatDate = (dateString: string) => {
 	return new Date(dateString).toLocaleDateString("en-US", {

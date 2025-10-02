@@ -1,36 +1,59 @@
 // src/components/JournalEditor.tsx
-'use client';
+"use client";
 
-import { Textarea } from '@mantine/core';
-import { IconMicrophone } from '@tabler/icons-react';
+import { Textarea, ActionIcon, Tooltip } from "@mantine/core";
+import { IconMicrophone, IconMicrophoneOff } from "@tabler/icons-react";
 
 interface JournalEditorProps {
-  value: string;
-  onChange: (content: string) => void;
-  moodLabel?: string; 
+	value: string;
+	onChange: (value: string) => void;
+	moodLabel: string | undefined;
+	isListening: boolean;
+	onToggleListening: () => void;
 }
 
-export function JournalEditor({ value, onChange, moodLabel }: JournalEditorProps) {
-  const placeholderText = moodLabel
-    ? `I feel ${moodLabel.toLowerCase()} because...`
-    : 'Describe your thoughts and feelings...';
-
-  return (
-    <Textarea
-      // 3. Apply the dynamic placeholder
-      placeholder={placeholderText}
-      autosize
-      minRows={4}
-      variant="filled"
-      radius="md"
-      value={value}
-      onChange={(event) => onChange(event.currentTarget.value)}
-      rightSection={<IconMicrophone size={20} style={{ display: 'block', opacity: 0.5 }}/>}
-      styles={(theme) => ({
-        input: {
-          backgroundColor: theme.colors['brand-beige'][1],
-        }
-      })}
-    />
-  );
+export function JournalEditor({
+	value,
+	onChange,
+	moodLabel,
+	isListening,
+	onToggleListening,
+}: JournalEditorProps) {
+	return (
+		<div style={{ position: "relative" }}>
+			<Textarea
+				value={value}
+				onChange={(event) => onChange(event.currentTarget.value)}
+				placeholder={
+					moodLabel
+						? `Tell me more about feeling ${moodLabel.toLowerCase()}...` :
+						`What's on your mind?`
+				}
+				minRows={5}
+				autosize
+			/>
+			<Tooltip
+				label={isListening ? "Stop listening" : "Start listening"}
+				position="top"
+				withArrow
+			>
+				<ActionIcon
+					onClick={onToggleListening}
+					style={{
+						position: "absolute",
+						bottom: "10px",
+						right: "10px",
+					}}
+					variant={isListening ? "filled" : "subtle"}
+					color={isListening ? "red" : "gray"}
+				>
+					{isListening ? (
+						<IconMicrophoneOff size={18} />
+					) : (
+						<IconMicrophone size={18} />
+					)}
+				</ActionIcon>
+			</Tooltip>
+		</div>
+	);
 }
