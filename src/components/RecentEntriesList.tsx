@@ -13,7 +13,9 @@ const formatDate = (dateString: string) => {
 	return new Date(dateString).toLocaleDateString("en-US", {
 		month: "long",
 		day: "numeric",
-		year: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+		hour12: true,
 	});
 };
 
@@ -29,12 +31,7 @@ export function RecentEntriesList({ entries }: { entries: JournalEntry[] }) {
 				{entries.map((entry) => (
 					<Accordion.Item key={entry.id} value={entry.id}>
 						<Accordion.Control>
-							<Text fw={600}>
-								{new Date(entry.created_at).toLocaleDateString(
-									"en-US",
-									{ month: "long", day: "numeric" }
-								)}
-							</Text>
+							<Text fw={600}>{formatDate(entry.created_at)}</Text>
 						</Accordion.Control>
 						<Accordion.Panel>
 							{entry.mood && (
