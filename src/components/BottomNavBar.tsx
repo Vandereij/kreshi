@@ -1,7 +1,7 @@
 // src/components/BottomNavBar.tsx
 "use client";
 
-import { Anchor, Group, Text } from "@mantine/core";
+import { Anchor, Box, Group, Text } from "@mantine/core";
 import {
 	IconHome,
 	IconBook,
@@ -10,6 +10,7 @@ import {
 	IconUserCircle,
 } from "@tabler/icons-react";
 import { usePathname } from "next/navigation";
+import classes from "./BottomNavBar.module.css";
 
 const navItems = [
 	{ icon: IconHome, label: "Home", href: "/" },
@@ -37,38 +38,33 @@ export function BottomNavBar() {
 				padding: `0 ${theme.spacing.xs}`,
 			})}
 		>
-			{navItems.map((item) => {
-				const isActive = pathname === item.href;
-				const Icon = item.icon;
-				return (
-					<Anchor
-						key={item.label}
-						href={item.href}
-						style={(theme) => ({
-							flex: 1,
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "center",
-							justifyContent: "center",
-							textDecoration: "none",
-							color: isActive
-								? theme.black
-								: theme.colors.gray[6],
-							fontWeight: isActive ? 700 : 400,
-							height: "100%",
-							borderRadius: theme.radius.sm,
-							"&:hover": {
-								backgroundColor: theme.colors["brand-beige"][1],
-							},
-						})}
-					>
-						<Icon size={24} stroke={isActive ? 2 : 1.5} />
-						<Text size="xs" mt={4}>
-							{item.label}
-						</Text>
-					</Anchor>
-				);
-			})}
+			<Box
+				style={() => ({
+					maxWidth: "720px",
+					height: "100%",
+					display: "flex",
+					flexDirection: "row",
+					flex: 1,
+				})}
+			>
+				{navItems.map((item) => {
+					const isActive = pathname === item.href;
+					const Icon = item.icon;
+					return (
+						<Anchor
+							key={item.label}
+							href={item.href}
+							className={classes.link}
+							data-active={isActive ? "true" : undefined}
+						>
+							<Icon size={24} stroke={isActive ? 2 : 1.5} />
+							<Text size="xs" mt={4}>
+								{item.label}
+							</Text>
+						</Anchor>
+					);
+				})}
+			</Box>
 		</Group>
 	);
 }

@@ -5,7 +5,6 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import './globals.css';
 import { Providers } from './providers';
-// 1. Import our new client-side shell component
 import { MainAppShell } from '@/components/MainAppShell';
 
 const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] });

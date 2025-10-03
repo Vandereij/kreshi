@@ -186,11 +186,9 @@ export default function HomePage() {
 
 					<AiInsightCard />
 				</Stack>
-			</Container>
-			{/* Save Button outside container for full-width effect */}
 			<Box
 				style={(theme) => ({
-					padding: `0 ${theme.spacing.sm} ${theme.spacing.sm}`,
+					padding: `calc(${theme.spacing.sm} * 3) 0`,
 				})}
 			>
 				<Button
@@ -202,6 +200,7 @@ export default function HomePage() {
 					Save Entry
 				</Button>
 			</Box>
+			</Container>
 			<BottomNavBar />
 		</Box>
 	);

@@ -59,7 +59,7 @@ export function MoodSelector({ value, onChange }: MoodSelectorProps) {
               alignItems: 'center',
               justifyContent: 'center',
               height: '60px',
-              width: '60px',
+              maxWidth: '60px',
               borderRadius: '50%',
               backgroundColor: mood.color,
               boxShadow: isSelected ? embossShadow : 'none',

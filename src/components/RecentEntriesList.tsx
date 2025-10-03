@@ -1,25 +1,29 @@
 // src/components/RecentEntriesList.tsx
 "use client";
 
-import { Paper, Title, Text, Accordion, Group, Badge } from "@mantine/core";
-import type { JournalEntry } from "@/app/progress/page"; // We'll create this type next
+import { useState, useEffect } from "react"; // Import useState and useEffect
+import { Paper, Title, Text, Accordion, Group, Badge, Skeleton } from "@mantine/core";
+import type { JournalEntry } from "@/app/progress/page";
 
 // A helper to format the date nicely
 const formatDate = (dateString: string) => {
 	return new Date(dateString).toLocaleDateString("en-US", {
 		month: "long",
 		day: "numeric",
-		hour: "numeric",
-		minute: "numeric",
-		hour12: true,
+		year: "numeric",
 	});
 };
 
 export function RecentEntriesList({ entries }: { entries: JournalEntry[] }) {
+	// --- THE FIX: PART 1 ---
+	// Create a state to track if the component has mounted on the client
+	const [hasMounted, setHasMounted] = useState(false);
+	useEffect(() => {
+		setHasMounted(true);
+	}, []);
+
 	return (
 		<Paper>
-			{" "}
-			{/* Uses default styles */}
 			<Title order={4} fw={700} mb="lg">
 				Recent Entries
 			</Title>
@@ -27,7 +31,26 @@ export function RecentEntriesList({ entries }: { entries: JournalEntry[] }) {
 				{entries.map((entry) => (
 					<Accordion.Item key={entry.id} value={entry.id}>
 						<Accordion.Control>
-							<Text fw={600}>{formatDate(entry.created_at)}</Text>
+							<Text fw={600} component="div">
+								{/* --- THE FIX: PART 2 --- */}
+								{/* Conditionally render the date */}
+								{/* On the server (and initial client render), show a placeholder */}
+								{!hasMounted ? (
+									<Skeleton height={16} width="50%" />
+								) : (
+									// After mounting, show the correctly formatted date for the user's locale
+									new Date(entry.created_at).toLocaleString(
+										"en-US",
+										{
+											month: "long",
+											day: "numeric",
+											hour: "numeric",
+											minute: "numeric",
+											hour12: true,
+										}
+									)
+								)}
+							</Text>
 						</Accordion.Control>
 						<Accordion.Panel>
 							{entry.mood && (
