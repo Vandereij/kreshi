@@ -5,15 +5,6 @@ import { useState, useEffect } from "react"; // Import useState and useEffect
 import { Paper, Title, Text, Accordion, Group, Badge, Skeleton } from "@mantine/core";
 import type { JournalEntry } from "@/app/progress/page";
 
-// A helper to format the date nicely
-const formatDate = (dateString: string) => {
-	return new Date(dateString).toLocaleDateString("en-US", {
-		month: "long",
-		day: "numeric",
-		year: "numeric",
-	});
-};
-
 export function RecentEntriesList({ entries }: { entries: JournalEntry[] }) {
 	// --- THE FIX: PART 1 ---
 	// Create a state to track if the component has mounted on the client
