@@ -1,28 +1,31 @@
+// src/components/AiInsightCard.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { Paper, Text, Loader, Group, ActionIcon, Tooltip, Stack, Button } from "@mantine/core";
-import { IconRefresh } from "@tabler/icons-react"; // Make sure to install @tabler/icons-react
+import { IconRefresh } from "@tabler/icons-react";
 
-// Define the props the component will accept
 interface AiInsightCardProps {
 	prompts: string[];
 	isLoading: boolean;
 	error: string | null;
-    onGenerate: (days: number) => void; // Function to call when user clicks a button
+    onGenerate: (days: number) => void;
 }
 
 export function AiInsightCard({ prompts, isLoading, error, onGenerate }: AiInsightCardProps) {
 	const [currentIndex, setCurrentIndex] = useState(0);
 
-	// When the prompts array changes (e.g., after a new fetch), reset the index to 0
+    // --- CHANGE: Create a new array limited to a maximum of 3 prompts ---
+    const displayPrompts = prompts.slice(0, 3);
+
+	// Reset the index when the original prompts prop changes
 	useEffect(() => {
 		setCurrentIndex(0);
 	}, [prompts]);
 
 	const handleNextPrompt = () => {
-		// Cycle through the available prompts
-		setCurrentIndex((prevIndex) => (prevIndex + 1) % prompts.length);
+		// --- CHANGE: Use the limited array for cycling ---
+		setCurrentIndex((prevIndex) => (prevIndex + 1) % displayPrompts.length);
 	};
 
 	const renderContent = () => {
@@ -33,8 +36,9 @@ export function AiInsightCard({ prompts, isLoading, error, onGenerate }: AiInsig
 		if (error) {
 			return <Text size="sm" c="red">Failed to load insights. Please try again.</Text>;
 		}
-
-		if (!prompts || prompts.length === 0) {
+        
+        // --- CHANGE: Check the limited array ---
+		if (!displayPrompts || displayPrompts.length === 0) {
 			return (
 				<Text size="sm" ta="center">
 					Write a few more entries to unlock your first AI-powered insight!
@@ -42,8 +46,8 @@ export function AiInsightCard({ prompts, isLoading, error, onGenerate }: AiInsig
 			);
 		}
 
-		// Display the current prompt
-		return <Text size="sm" ta="center">{prompts[currentIndex]}</Text>;
+        // --- CHANGE: Display from the limited array ---
+		return <Text size="sm" ta="center">{displayPrompts[currentIndex]}</Text>;
 	};
 
 	return (
@@ -56,22 +60,19 @@ export function AiInsightCard({ prompts, isLoading, error, onGenerate }: AiInsig
 			})}
 		>
 			<Stack align="center" gap="sm">
-                {/* Main content area for prompts, loaders, or errors */}
 				<div style={{ minHeight: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 					{renderContent()}
 				</div>
 
-                {/* Action buttons */}
 				<Group justify="center" gap="xs">
-                    {/* Show refresh button only if there are multiple prompts */}
-					{prompts.length > 1 && (
+                    {/* --- CHANGE: Check the limited array's length --- */}
+					{displayPrompts.length > 1 && (
 						<Tooltip label="Next Prompt" withArrow>
 							<ActionIcon variant="subtle" onClick={handleNextPrompt} size="sm">
 								<IconRefresh />
 							</ActionIcon>
 						</Tooltip>
 					)}
-                    {/* Buttons to generate prompts for different time ranges */}
                     <Button 
                         variant="light" 
                         size="compact-xs" 
