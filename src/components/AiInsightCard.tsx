@@ -2,21 +2,35 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Paper, Text, Loader, Group, ActionIcon, Tooltip, Stack, Button } from "@mantine/core";
+import {
+	Paper,
+	Text,
+	Loader,
+	Group,
+	ActionIcon,
+	Tooltip,
+	Stack,
+	Button,
+} from "@mantine/core";
 import { IconRefresh } from "@tabler/icons-react";
 
 interface AiInsightCardProps {
 	prompts: string[];
 	isLoading: boolean;
 	error: string | null;
-    onGenerate: (days: number) => void;
+	onGenerate: (days: number) => void;
 }
 
-export function AiInsightCard({ prompts, isLoading, error, onGenerate }: AiInsightCardProps) {
+export function AiInsightCard({
+	prompts,
+	isLoading,
+	error,
+	onGenerate,
+}: AiInsightCardProps) {
 	const [currentIndex, setCurrentIndex] = useState(0);
 
-    // --- CHANGE: Create a new array limited to a maximum of 3 prompts ---
-    const displayPrompts = prompts.slice(0, 3);
+	// --- CHANGE: Create a new array limited to a maximum of 3 prompts ---
+	const displayPrompts = prompts.slice(0, 3);
 
 	// Reset the index when the original prompts prop changes
 	useEffect(() => {
@@ -34,20 +48,29 @@ export function AiInsightCard({ prompts, isLoading, error, onGenerate }: AiInsig
 		}
 
 		if (error) {
-			return <Text size="sm" c="red">Failed to load insights. Please try again.</Text>;
-		}
-        
-        // --- CHANGE: Check the limited array ---
-		if (!displayPrompts || displayPrompts.length === 0) {
 			return (
-				<Text size="sm" ta="center">
-					Write a few more entries to unlock your first AI-powered insight!
+				<Text size="sm" c="red">
+					Failed to load insights. Please try again.
 				</Text>
 			);
 		}
 
-        // --- CHANGE: Display from the limited array ---
-		return <Text size="sm" ta="center">{displayPrompts[currentIndex]}</Text>;
+		// --- CHANGE: Check the limited array ---
+		if (!displayPrompts || displayPrompts.length === 0) {
+			return (
+				<Text size="sm" ta="center">
+					Write a few more entries to unlock your first AI-powered
+					insight!
+				</Text>
+			);
+		}
+
+		// --- CHANGE: Display from the limited array ---
+		return (
+			<Text size="sm" ta="center">
+				{displayPrompts[currentIndex]}
+			</Text>
+		);
 	};
 
 	return (
@@ -60,13 +83,33 @@ export function AiInsightCard({ prompts, isLoading, error, onGenerate }: AiInsig
 			})}
 		>
 			<Stack align="center" gap="sm">
-				<div style={{ minHeight: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+				<div
+					style={{
+						minHeight: "40px",
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+						gap: "8px"
+					}}
+				>
 					{renderContent()}
+
+					{displayPrompts.length > 1 && (
+						<Tooltip label="Next Prompt" withArrow>
+							<ActionIcon
+								variant="subtle"
+								onClick={handleNextPrompt}
+								size="sm"
+							>
+								<IconRefresh />
+							</ActionIcon>
+						</Tooltip>
+					)}
 				</div>
 
-				<Group justify="center" gap="xs">
-                    {/* --- CHANGE: Check the limited array's length --- */}
-					{displayPrompts.length > 1 && (
+				{/* <Group justify="center" gap="xs"> */}
+				{/* --- CHANGE: Check the limited array's length --- */}
+				{/* {displayPrompts.length > 1 && (
 						<Tooltip label="Next Prompt" withArrow>
 							<ActionIcon variant="subtle" onClick={handleNextPrompt} size="sm">
 								<IconRefresh />
@@ -89,7 +132,7 @@ export function AiInsightCard({ prompts, isLoading, error, onGenerate }: AiInsig
                     >
                         Last 30 Days
                     </Button>
-				</Group>
+				</Group> */}
 			</Stack>
 		</Paper>
 	);

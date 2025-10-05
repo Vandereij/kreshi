@@ -228,6 +228,14 @@ export default function HomePage() {
 								? `Tell me more about feeling ${selectedMoodObject?.label.toLowerCase()}...`
 								: `What's on your mind?`}
 						</Text>
+						<AiInsightCard
+							prompts={prompts}
+							isLoading={isAiLoading}
+							error={aiError}
+							onGenerate={(days) =>
+								generatePrompts(entries, days)
+							}
+						/>
 						<JournalEditor
 							value={content}
 							onChange={setContent}
@@ -235,12 +243,6 @@ export default function HomePage() {
 							onToggleListening={handleToggleListening}
 						/>
 					</Stack>
-					<AiInsightCard
-						prompts={prompts}
-						isLoading={isAiLoading}
-						error={aiError}
-						onGenerate={(days) => generatePrompts(entries, days)}
-					/>
 					<Text size="xs" c="dimmed">
 						💡 Over time, your companion will highlight recurring
 						themes and patterns to help you grow.
