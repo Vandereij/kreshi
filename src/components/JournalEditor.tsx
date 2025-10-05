@@ -7,7 +7,6 @@ import { IconMicrophone, IconMicrophoneOff } from "@tabler/icons-react";
 interface JournalEditorProps {
 	value: string;
 	onChange: (value: string) => void;
-	moodLabel: string | undefined;
 	isListening: boolean;
 	onToggleListening: () => void;
 }
@@ -15,7 +14,6 @@ interface JournalEditorProps {
 export function JournalEditor({
 	value,
 	onChange,
-	moodLabel,
 	isListening,
 	onToggleListening,
 }: JournalEditorProps) {
@@ -24,11 +22,7 @@ export function JournalEditor({
 			<Textarea
 				value={value}
 				onChange={(event) => onChange(event.currentTarget.value)}
-				placeholder={
-					moodLabel
-						? `Tell me more about feeling ${moodLabel.toLowerCase()}...` :
-						`What's on your mind?`
-				}
+				placeholder={'Type here...'}
 				minRows={5}
 				autosize
 			/>

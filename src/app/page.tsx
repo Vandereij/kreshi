@@ -5,7 +5,7 @@ import "regenerator-runtime/runtime";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { useAiPrompts } from '@/hooks/useAiPrompts';
+import { useAiPrompts } from "@/hooks/useAiPrompts";
 import {
 	Container,
 	Title,
@@ -29,9 +29,9 @@ import SpeechRecognition, {
 } from "react-speech-recognition";
 
 type JournalEntry = {
-    content: string;
-    date: string;
-}
+	content: string;
+	date: string;
+};
 
 export default function HomePage() {
 	const router = useRouter();
@@ -41,8 +41,13 @@ export default function HomePage() {
 	const [content, setContent] = useState("");
 	const [loading, setLoading] = useState(false);
 
-    const [entries, setEntries] = useState<JournalEntry[]>([]);
-    const { prompts, isLoading: isAiLoading, error: aiError, generatePrompts } = useAiPrompts();
+	const [entries, setEntries] = useState<JournalEntry[]>([]);
+	const {
+		prompts,
+		isLoading: isAiLoading,
+		error: aiError,
+		generatePrompts,
+	} = useAiPrompts();
 
 	const {
 		transcript,
@@ -64,45 +69,45 @@ export default function HomePage() {
 		return () => subscription.unsubscribe();
 	}, [router]);
 
-    const fetchEntries = useCallback(async () => {
-        // No need to check for session here, as this is only called inside a session check
-        const { data, error } = await supabase
-            .from('journal_entries')
-            .select('content, created_at')
-            .order('created_at', { ascending: true });
+	const fetchEntries = useCallback(async () => {
+		// No need to check for session here, as this is only called inside a session check
+		const { data, error } = await supabase
+			.from("journal_entries")
+			.select("content, created_at")
+			.order("created_at", { ascending: true });
 
-        if (error) {
-            console.error("Error fetching entries:", error);
-            return [];
-        }
-        
-        const formattedEntries: JournalEntry[] = data.map(entry => ({
-            content: entry.content,
-            date: new Date(entry.created_at).toISOString().slice(0, 10)
-        }));
-        
-        setEntries(formattedEntries);
-        return formattedEntries;
-    }, []); // Removed session from dependency array as it's not directly used
+		if (error) {
+			console.error("Error fetching entries:", error);
+			return [];
+		}
 
-    useEffect(() => {
-        // This effect runs once when the component mounts and finds a session.
-        // It fetches data and generates prompts in the background upon page load.
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                setSession(session);
-                const loadInitialData = async () => {
-                    const loadedEntries = await fetchEntries();
-                    if (loadedEntries.length > 0) {
-                        generatePrompts(loadedEntries, 14);
-                    }
-                };
-                loadInitialData();
-            } else {
-                router.push("/auth");
-            }
-        });
-    }, [router, fetchEntries, generatePrompts]);
+		const formattedEntries: JournalEntry[] = data.map((entry) => ({
+			content: entry.content,
+			date: new Date(entry.created_at).toISOString().slice(0, 10),
+		}));
+
+		setEntries(formattedEntries);
+		return formattedEntries;
+	}, []); // Removed session from dependency array as it's not directly used
+
+	useEffect(() => {
+		// This effect runs once when the component mounts and finds a session.
+		// It fetches data and generates prompts in the background upon page load.
+		supabase.auth.getSession().then(({ data: { session } }) => {
+			if (session) {
+				setSession(session);
+				const loadInitialData = async () => {
+					const loadedEntries = await fetchEntries();
+					if (loadedEntries.length > 0) {
+						generatePrompts(loadedEntries, 14);
+					}
+				};
+				loadInitialData();
+			} else {
+				router.push("/auth");
+			}
+		});
+	}, [router, fetchEntries, generatePrompts]);
 
 	useEffect(() => {
 		setFeelings([]);
@@ -116,7 +121,8 @@ export default function HomePage() {
 		if (!session) return;
 		if (!mood && feelings.length === 0 && !content.trim()) {
 			notifications.show({
-				message: "Please select a mood or write something before saving.",
+				message:
+					"Please select a mood or write something before saving.",
 				color: "yellow",
 			});
 			return;
@@ -126,8 +132,8 @@ export default function HomePage() {
 		const { error } = await supabase
 			.from("journal_entries")
 			.insert({ mood, feelings, content });
-        
-        setLoading(false); // Stop loading indicator immediately after the DB operation
+
+		setLoading(false); // Stop loading indicator immediately after the DB operation
 
 		if (error) {
 			notifications.show({
@@ -141,10 +147,10 @@ export default function HomePage() {
 				message: "Your entry has been recorded.",
 				color: "teal",
 			});
-            // --- FIX: REDIRECT IMMEDIATELY ---
-            // We no longer wait for AI generation here. The user is redirected instantly.
-            // The next time they visit the homepage, the prompts will be freshly updated.
-			router.push('/progress');
+			// --- FIX: REDIRECT IMMEDIATELY ---
+			// We no longer wait for AI generation here. The user is redirected instantly.
+			// The next time they visit the homepage, the prompts will be freshly updated.
+			router.push("/progress");
 		}
 	};
 
@@ -204,41 +210,46 @@ export default function HomePage() {
 						</Collapse>
 					</Stack>
 					<Stack gap="xs">
-						<Title order={4} fw={700}>
-							What&apos;s on your mind?
+						<Title order={3} fw={700}>
+							Journal reflection
 						</Title>
 						<Text size="sm" c="dimmed">
-							Describe your day or what led to this feeling.
+							{selectedMoodObject?.label
+								? `Tell me more about feeling ${selectedMoodObject?.label.toLowerCase()}...`
+								: `What's on your mind?`}
 						</Text>
 						<JournalEditor
 							value={content}
 							onChange={setContent}
-							moodLabel={selectedMoodObject?.label}
 							isListening={listening}
 							onToggleListening={handleToggleListening}
 						/>
 					</Stack>
 					<AiInsightCard
-                        prompts={prompts}
-                        isLoading={isAiLoading}
-                        error={aiError}
-                        onGenerate={(days) => generatePrompts(entries, days)}
-                    />
+						prompts={prompts}
+						isLoading={isAiLoading}
+						error={aiError}
+						onGenerate={(days) => generatePrompts(entries, days)}
+					/>
+					<Text size="xs" c="dimmed">
+						💡 Over time, your companion will highlight recurring
+						themes and patterns to help you grow.
+					</Text>
 				</Stack>
-                <Box
-                    style={(theme) => ({
-                        padding: `calc(${theme.spacing.sm} * 3) 0`,
-                    })}
-                >
-                    <Button
-                        fullWidth
-                        size="lg"
-                        onClick={handleSaveEntry}
-                        loading={loading}
-                    >
-                        Save Entry
-                    </Button>
-                </Box>
+				<Box
+					style={(theme) => ({
+						padding: `calc(${theme.spacing.sm} * 3) 0`,
+					})}
+				>
+					<Button
+						fullWidth
+						size="lg"
+						onClick={handleSaveEntry}
+						loading={loading}
+					>
+						Save Entry
+					</Button>
+				</Box>
 			</Container>
 			<BottomNavBar />
 		</Box>

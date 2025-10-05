@@ -19,6 +19,7 @@ export function extractThemes(
   if (recentEntries.length === 0) {
     return [];
   }
+  const textBlob = recentEntries.map(e => e.text.toLowerCase()).join(" ");
 
   // --- START: REFINED STOP WORD LIST ---
   // This list is much safer for journal entries. It avoids removing words
@@ -28,6 +29,9 @@ export function extractThemes(
     "a", "an", "the",
     // Conjunctions
     "and", "but", "or", "so", "while", "because",
+    // Pronouns
+    "i", "me", "my", "myself", "we", "our", "you", "your", "he", "him", "his",
+    "she", "her", "it", "its", "they", "them", "their",
     // Prepositions (only the most common that are less likely to be part of key phrases)
     "of", "at", "by", "for", "with", "from", "to",
     // Common verbs that add little meaning on their own
@@ -38,30 +42,19 @@ export function extractThemes(
   ]);
   // --- END: REFINED STOP WORD LIST ---
 
-  const phraseCounts = new Map<string, number>();
-  // const wordCounts = new Map<string, number>();
+  const wordCounts = new Map<string, number>();
 
-  for (const entry of recentEntries) {
-    const text = entry.text.toLowerCase().replace(/[^\w\s]/g, " ");
-    const words = text.split(/\s+/).filter(word => word && !stopWords.has(word));
-
-    // Count single words (unigrams)
-    for (const word of words) {
-      if (word.length > 2) {
-        phraseCounts.set(word, (phraseCounts.get(word) || 0) + 1);
+  textBlob
+    .replace(/[^\w\s]/g, " ")
+    .split(/\s+/)
+    .forEach(word => {
+      if (word && !stopWords.has(word) && word.length > 2) {
+        wordCounts.set(word, (wordCounts.get(word) || 0) + 1);
       }
-    }
+    });
 
-    // Count pairs of words (bigrams)
-    for (let i = 0; i < words.length - 1; i++) {
-      const bigram = `${words[i]} ${words[i + 1]}`;
-      // Give a slight boost to bigrams to prioritize them
-      phraseCounts.set(bigram, (phraseCounts.get(bigram) || 0) + 1.5);
-    }
-  }
-
-  return Array.from(phraseCounts.entries())
-    .sort((a, b) => b[1] - a[1]) // Sort by frequency
-    .slice(0, themeLimit)         // Take the top themes
-    .map(([phrase]) => phrase);   // Return just the phrase
+  return Array.from(wordCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, themeLimit)
+    .map(([word]) => word);
 }
