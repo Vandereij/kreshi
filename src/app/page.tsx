@@ -2,9 +2,10 @@
 "use client";
 
 import "regenerator-runtime/runtime";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { useAiPrompts } from '@/hooks/useAiPrompts';
 import {
 	Container,
 	Title,
@@ -27,6 +28,11 @@ import SpeechRecognition, {
 	useSpeechRecognition,
 } from "react-speech-recognition";
 
+type JournalEntry = {
+    content: string;
+    date: string;
+}
+
 export default function HomePage() {
 	const router = useRouter();
 	const [session, setSession] = useState<Session | null>(null);
@@ -34,6 +40,9 @@ export default function HomePage() {
 	const [feelings, setFeelings] = useState<string[]>([]);
 	const [content, setContent] = useState("");
 	const [loading, setLoading] = useState(false);
+
+    const [entries, setEntries] = useState<JournalEntry[]>([]);
+    const { prompts, isLoading: isAiLoading, error: aiError, generatePrompts } = useAiPrompts();
 
 	const {
 		transcript,
@@ -43,13 +52,6 @@ export default function HomePage() {
 	} = useSpeechRecognition();
 
 	useEffect(() => {
-		supabase.auth.getSession().then(({ data: { session } }) => {
-			if (!session) {
-				router.push("/auth"); // Redirect if not logged in
-			} else {
-				setSession(session);
-			}
-		});
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange((_event, session) => {
@@ -62,8 +64,47 @@ export default function HomePage() {
 		return () => subscription.unsubscribe();
 	}, [router]);
 
+    const fetchEntries = useCallback(async () => {
+        // No need to check for session here, as this is only called inside a session check
+        const { data, error } = await supabase
+            .from('journal_entries')
+            .select('content, created_at')
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error("Error fetching entries:", error);
+            return [];
+        }
+        
+        const formattedEntries: JournalEntry[] = data.map(entry => ({
+            content: entry.content,
+            date: new Date(entry.created_at).toISOString().slice(0, 10)
+        }));
+        
+        setEntries(formattedEntries);
+        return formattedEntries;
+    }, []); // Removed session from dependency array as it's not directly used
+
+    useEffect(() => {
+        // This effect runs once when the component mounts and finds a session.
+        // It fetches data and generates prompts in the background upon page load.
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                setSession(session);
+                const loadInitialData = async () => {
+                    const loadedEntries = await fetchEntries();
+                    if (loadedEntries.length > 0) {
+                        generatePrompts(loadedEntries, 14);
+                    }
+                };
+                loadInitialData();
+            } else {
+                router.push("/auth");
+            }
+        });
+    }, [router, fetchEntries, generatePrompts]);
+
 	useEffect(() => {
-		// This prevents keeping "Happy" selected if the user switches from "Great" to "Awful".
 		setFeelings([]);
 	}, [mood]);
 
@@ -75,8 +116,7 @@ export default function HomePage() {
 		if (!session) return;
 		if (!mood && feelings.length === 0 && !content.trim()) {
 			notifications.show({
-				message:
-					"Please select a mood or write something before saving.",
+				message: "Please select a mood or write something before saving.",
 				color: "yellow",
 			});
 			return;
@@ -86,6 +126,8 @@ export default function HomePage() {
 		const { error } = await supabase
 			.from("journal_entries")
 			.insert({ mood, feelings, content });
+        
+        setLoading(false); // Stop loading indicator immediately after the DB operation
 
 		if (error) {
 			notifications.show({
@@ -99,13 +141,15 @@ export default function HomePage() {
 				message: "Your entry has been recorded.",
 				color: "teal",
 			});
-			router.push('/progress'); 
+            // --- FIX: REDIRECT IMMEDIATELY ---
+            // We no longer wait for AI generation here. The user is redirected instantly.
+            // The next time they visit the homepage, the prompts will be freshly updated.
+			router.push('/progress');
 		}
-		setLoading(false);
 	};
 
 	if (!session) {
-		return null; // Or a loading spinner
+		return null; // Or a loading spinner while waiting for the session
 	}
 
 	const selectedMoodObject = moods.find((m) => m.value === mood);
@@ -132,22 +176,15 @@ export default function HomePage() {
 
 	return (
 		<Box style={{ paddingBottom: "90px" }}>
-			{" "}
-			{/* Space for bottom nav + save button */}
 			<Container size="sm" py="xl">
 				<Stack gap="xl">
-					{/* Header Section */}
 					<Box>
 						<Title order={2} fw={800}>
 							Mood & CBT Companion
 						</Title>
 						<Text c="dimmed">Daily Check-in</Text>
 					</Box>
-
-					{/* How are you feeling? Section */}
 					<Stack gap="md">
-						{" "}
-						{/* Use a slightly smaller gap for this internal block */}
 						<Title order={3} fw={700}>
 							How are you feeling today?
 						</Title>
@@ -166,8 +203,6 @@ export default function HomePage() {
 							/>
 						</Collapse>
 					</Stack>
-
-					{/* Journal Section */}
 					<Stack gap="xs">
 						<Title order={4} fw={700}>
 							What&apos;s on your mind?
@@ -178,28 +213,32 @@ export default function HomePage() {
 						<JournalEditor
 							value={content}
 							onChange={setContent}
-							moodLabel={selectedMoodObject?.label} // Pass the label here
+							moodLabel={selectedMoodObject?.label}
 							isListening={listening}
 							onToggleListening={handleToggleListening}
 						/>
 					</Stack>
-
-					<AiInsightCard />
+					<AiInsightCard
+                        prompts={prompts}
+                        isLoading={isAiLoading}
+                        error={aiError}
+                        onGenerate={(days) => generatePrompts(entries, days)}
+                    />
 				</Stack>
-			<Box
-				style={(theme) => ({
-					padding: `calc(${theme.spacing.sm} * 3) 0`,
-				})}
-			>
-				<Button
-					fullWidth
-					size="lg"
-					onClick={handleSaveEntry}
-					loading={loading}
-				>
-					Save Entry
-				</Button>
-			</Box>
+                <Box
+                    style={(theme) => ({
+                        padding: `calc(${theme.spacing.sm} * 3) 0`,
+                    })}
+                >
+                    <Button
+                        fullWidth
+                        size="lg"
+                        onClick={handleSaveEntry}
+                        loading={loading}
+                    >
+                        Save Entry
+                    </Button>
+                </Box>
 			</Container>
 			<BottomNavBar />
 		</Box>
