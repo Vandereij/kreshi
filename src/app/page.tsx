@@ -180,6 +180,11 @@ export default function HomePage() {
 		}
 	};
 
+	const displayName =
+		(session.user?.user_metadata as any)?.name ||
+		session.user?.email?.split("@")[0] ||
+		"";
+
 	return (
 		<Box style={{ paddingBottom: "90px" }}>
 			<Container size="sm" py="xl">
@@ -188,7 +193,12 @@ export default function HomePage() {
 						<Title order={2} fw={800}>
 							Mood & CBT Companion
 						</Title>
-						<Text c="dimmed">Daily Check-in</Text>
+						<Text c="dimmed">
+							{displayName
+								? `Welcome back, ${displayName}. `
+								: ""}
+							Ready to check in?
+						</Text>
 					</Box>
 					<Stack gap="md">
 						<Title order={3} fw={700}>
