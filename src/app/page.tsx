@@ -23,7 +23,7 @@ import { AiInsightCard } from "@/components/AiInsightCard";
 import { BottomNavBar } from "@/components/BottomNavBar";
 import { moods } from "@/data/moods";
 import { feelingsByMood } from "@/data/feelings";
-import type { Session } from "@supabase/supabase-js";
+import type { Session, UserMetadata } from "@supabase/supabase-js";
 import SpeechRecognition, {
 	useSpeechRecognition,
 } from "react-speech-recognition";
@@ -181,7 +181,7 @@ export default function HomePage() {
 	};
 
 	const displayName =
-		(session.user?.user_metadata as any)?.name ||
+		(session.user?.user_metadata as UserMetadata)?.name ||
 		session.user?.email?.split("@")[0] ||
 		"";
 

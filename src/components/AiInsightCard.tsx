@@ -6,11 +6,11 @@ import {
 	Paper,
 	Text,
 	Loader,
-	Group,
+	// Group,
 	ActionIcon,
 	Tooltip,
 	Stack,
-	Button,
+	// Button,
 } from "@mantine/core";
 import { IconRefresh } from "@tabler/icons-react";
 
@@ -25,7 +25,7 @@ export function AiInsightCard({
 	prompts,
 	isLoading,
 	error,
-	onGenerate,
+	// onGenerate,
 }: AiInsightCardProps) {
 	const [currentIndex, setCurrentIndex] = useState(0);
 
