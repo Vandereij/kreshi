@@ -2,137 +2,63 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-	Paper,
-	Text,
-	Loader,
-	// Group,
-	ActionIcon,
-	Tooltip,
-	Stack,
-	// Button,
-} from "@mantine/core";
-import { IconRefresh } from "@tabler/icons-react";
+import { Paper, Text, Loader, ActionIcon, Tooltip, Stack } from "@mantine/core";
+import { IconRefresh, IconSparkles } from "@tabler/icons-react";
 
 interface AiInsightCardProps {
 	prompts: string[];
 	isLoading: boolean;
 	error: string | null;
-	onGenerate: (days: number) => void;
+    canRefresh: boolean;
+    onGenerate: () => void; // Simplified onGenerate
 }
 
-export function AiInsightCard({
-	prompts,
-	isLoading,
-	error,
-	// onGenerate,
-}: AiInsightCardProps) {
+export function AiInsightCard({ prompts, isLoading, error, canRefresh, onGenerate }: AiInsightCardProps) {
 	const [currentIndex, setCurrentIndex] = useState(0);
 
-	// --- CHANGE: Create a new array limited to a maximum of 3 prompts ---
-	const displayPrompts = prompts.slice(0, 3);
-
-	// Reset the index when the original prompts prop changes
+	// When prompts are added or cleared, show the latest one
 	useEffect(() => {
-		setCurrentIndex(0);
+		setCurrentIndex(prompts.length - 1);
 	}, [prompts]);
 
-	const handleNextPrompt = () => {
-		// --- CHANGE: Use the limited array for cycling ---
-		setCurrentIndex((prevIndex) => (prevIndex + 1) % displayPrompts.length);
+	const handleCycle = () => {
+		if (prompts.length === 0) return;
+		setCurrentIndex((prev) => (prev + 1) % prompts.length);
 	};
 
 	const renderContent = () => {
-		if (isLoading) {
+		if (isLoading && prompts.length === 0) {
 			return <Loader size="sm" />;
 		}
-
 		if (error) {
-			return (
-				<Text size="sm" c="red">
-					Failed to load insights. Please try again.
-				</Text>
-			);
+			return <Text size="sm" c="red">{error}</Text>;
 		}
-
-		// --- CHANGE: Check the limited array ---
-		if (!displayPrompts || displayPrompts.length === 0) {
-			return (
-				<Text size="sm" ta="center">
-					Write a few more entries to unlock your first AI-powered
-					insight!
-				</Text>
-			);
+		if (prompts.length === 0) {
+			return <Text size="sm" ta="center">Click the ✨ to generate your first AI insight.</Text>;
 		}
-
-		// --- CHANGE: Display from the limited array ---
-		return (
-			<Text size="sm" ta="center">
-				{displayPrompts[currentIndex]}
-			</Text>
-		);
+		return <Text size="sm" ta="center">{prompts[currentIndex]}</Text>;
 	};
 
 	return (
-		<Paper
-			p="md"
-			radius="md"
-			style={(theme) => ({
-				backgroundColor: theme.colors["brand-beige"][1],
-				border: "none",
-			})}
-		>
+		<Paper p="md" radius="md" /* ... styles */ >
 			<Stack align="center" gap="sm">
-				<div
-					style={{
-						minHeight: "40px",
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						gap: "8px"
-					}}
-				>
+				<div style={{ minHeight: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 					{renderContent()}
-
-					{displayPrompts.length > 1 && (
-						<Tooltip label="Next Prompt" withArrow>
-							<ActionIcon
-								variant="subtle"
-								onClick={handleNextPrompt}
-								size="sm"
-							>
-								<IconRefresh />
-							</ActionIcon>
-						</Tooltip>
-					)}
 				</div>
-
-				{/* <Group justify="center" gap="xs"> */}
-				{/* --- CHANGE: Check the limited array's length --- */}
-				{/* {displayPrompts.length > 1 && (
-						<Tooltip label="Next Prompt" withArrow>
-							<ActionIcon variant="subtle" onClick={handleNextPrompt} size="sm">
-								<IconRefresh />
+				<ActionIcon.Group>
+					<Tooltip label={canRefresh ? "Get a new insight" : "Refresh limit reached"} withArrow>
+						<ActionIcon variant="light" onClick={onGenerate} disabled={!canRefresh} loading={isLoading}>
+							<IconSparkles size="1rem" />
+						</ActionIcon>
+					</Tooltip>
+					{prompts.length > 1 && (
+						<Tooltip label="Cycle through saved insights" withArrow>
+							<ActionIcon variant="light" onClick={handleCycle}>
+								<IconRefresh size="1rem" />
 							</ActionIcon>
 						</Tooltip>
 					)}
-                    <Button 
-                        variant="light" 
-                        size="compact-xs" 
-                        onClick={() => onGenerate(7)} 
-                        disabled={isLoading}
-                    >
-                        Last 7 Days
-                    </Button>
-                     <Button 
-                        variant="light" 
-                        size="compact-xs" 
-                        onClick={() => onGenerate(30)} 
-                        disabled={isLoading}
-                    >
-                        Last 30 Days
-                    </Button>
-				</Group> */}
+				</ActionIcon.Group>
 			</Stack>
 		</Paper>
 	);

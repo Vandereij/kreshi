@@ -5,7 +5,6 @@ import "regenerator-runtime/runtime";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { useAiPrompts } from "@/hooks/useAiPrompts";
 import {
 	Container,
 	Title,
@@ -27,6 +26,7 @@ import type { Session, UserMetadata } from "@supabase/supabase-js";
 import SpeechRecognition, {
 	useSpeechRecognition,
 } from "react-speech-recognition";
+import { usePersistentPrompts } from "@/hooks/usePersistentPrompts";
 
 type JournalEntry = {
 	content: string;
@@ -46,8 +46,10 @@ export default function HomePage() {
 		prompts,
 		isLoading: isAiLoading,
 		error: aiError,
-		generatePrompts,
-	} = useAiPrompts();
+		generateNewPrompt,
+		clearPrompts,
+		canRefresh,
+	} = usePersistentPrompts(entries);
 
 	const {
 		transcript,
@@ -55,19 +57,6 @@ export default function HomePage() {
 		resetTranscript,
 		browserSupportsSpeechRecognition,
 	} = useSpeechRecognition();
-
-	useEffect(() => {
-		const {
-			data: { subscription },
-		} = supabase.auth.onAuthStateChange((_event, session) => {
-			if (!session) {
-				router.push("/auth");
-			} else {
-				setSession(session);
-			}
-		});
-		return () => subscription.unsubscribe();
-	}, [router]);
 
 	const fetchEntries = useCallback(async () => {
 		// No need to check for session here, as this is only called inside a session check
@@ -88,26 +77,18 @@ export default function HomePage() {
 
 		setEntries(formattedEntries);
 		return formattedEntries;
-	}, []); // Removed session from dependency array as it's not directly used
+	}, []);
 
 	useEffect(() => {
-		// This effect runs once when the component mounts and finds a session.
-		// It fetches data and generates prompts in the background upon page load.
 		supabase.auth.getSession().then(({ data: { session } }) => {
 			if (session) {
 				setSession(session);
-				const loadInitialData = async () => {
-					const loadedEntries = await fetchEntries();
-					if (loadedEntries.length > 0) {
-						generatePrompts(loadedEntries, 14);
-					}
-				};
-				loadInitialData();
+				fetchEntries();
 			} else {
 				router.push("/auth");
 			}
 		});
-	}, [router, fetchEntries, generatePrompts]);
+	}, [router, fetchEntries]);
 
 	useEffect(() => {
 		setFeelings([]);
@@ -142,6 +123,7 @@ export default function HomePage() {
 				color: "red",
 			});
 		} else {
+			clearPrompts();
 			notifications.show({
 				title: "Saved!",
 				message: "Your entry has been recorded.",
@@ -232,9 +214,8 @@ export default function HomePage() {
 							prompts={prompts}
 							isLoading={isAiLoading}
 							error={aiError}
-							onGenerate={(days) =>
-								generatePrompts(entries, days)
-							}
+							canRefresh={canRefresh}
+							onGenerate={() => generateNewPrompt(entries)}
 						/>
 						<JournalEditor
 							value={content}
