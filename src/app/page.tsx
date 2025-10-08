@@ -33,9 +33,15 @@ type JournalEntry = {
 	date: string;
 };
 
+type Profile = {
+	username?: string;
+	first_name?: string;
+};
+
 export default function HomePage() {
 	const router = useRouter();
 	const [session, setSession] = useState<Session | null>(null);
+	const [profile, setProfile] = useState<Profile | null>(null);
 	const [mood, setMood] = useState<string | null>(null);
 	const [feelings, setFeelings] = useState<string[]>([]);
 	const [content, setContent] = useState("");
@@ -59,7 +65,6 @@ export default function HomePage() {
 	} = useSpeechRecognition();
 
 	const fetchEntries = useCallback(async () => {
-		// No need to check for session here, as this is only called inside a session check
 		const { data, error } = await supabase
 			.from("journal_entries")
 			.select("content, created_at")
@@ -80,14 +85,32 @@ export default function HomePage() {
 	}, []);
 
 	useEffect(() => {
-		supabase.auth.getSession().then(({ data: { session } }) => {
+		const fetchSessionAndProfile = async () => {
+			const {
+				data: { session },
+			} = await supabase.auth.getSession();
+
 			if (session) {
 				setSession(session);
 				fetchEntries();
+
+				const { data: profileData, error } = await supabase
+					.from("profiles")
+					.select("username, first_name")
+					.eq("id", session.user.id)
+					.single();
+
+				if (error) {
+					console.error("Error fetching profile:", error.message);
+				} else if (profileData) {
+					setProfile(profileData);
+				}
 			} else {
 				router.push("/auth");
 			}
-		});
+		};
+
+		fetchSessionAndProfile();
 	}, [router, fetchEntries]);
 
 	useEffect(() => {
@@ -129,15 +152,12 @@ export default function HomePage() {
 				message: "Your entry has been recorded.",
 				color: "teal",
 			});
-			// --- FIX: REDIRECT IMMEDIATELY ---
-			// We no longer wait for AI generation here. The user is redirected instantly.
-			// The next time they visit the homepage, the prompts will be freshly updated.
 			router.push("/progress");
 		}
 	};
 
 	if (!session) {
-		return null; // Or a loading spinner while waiting for the session
+		return null;
 	}
 
 	const selectedMoodObject = moods.find((m) => m.value === mood);
@@ -163,7 +183,8 @@ export default function HomePage() {
 	};
 
 	const displayName =
-		(session.user?.user_metadata as UserMetadata)?.name ||
+		profile?.username ||
+		profile?.first_name ||
 		session.user?.email?.split("@")[0] ||
 		"";
 

@@ -15,6 +15,7 @@ import {
 	Button,
 	Group,
 	Divider,
+	TextInput,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { BottomNavBar } from "@/components/BottomNavBar";
@@ -24,26 +25,95 @@ export default function SettingsPage() {
 	const router = useRouter();
 	const [user, setUser] = useState<User | null>(null);
 	const [loading, setLoading] = useState(false);
+
+	// State for Profile Details
+	const [username, setUsername] = useState("");
+	const [firstName, setFirstName] = useState("");
+	const [lastName, setLastName] = useState("");
+	const [phoneNumber, setPhoneNumber] = useState("");
+
+	// State for Password Change
 	const [newPassword, setNewPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 
+	// Fetch user and profile data on component mount
 	useEffect(() => {
-		const fetchUser = async () => {
+		const fetchData = async () => {
+			setLoading(true);
 			// Fetches the current logged-in user's data
 			const {
 				data: { user },
 			} = await supabase.auth.getUser();
 			setUser(user);
+
+			if (user) {
+				// Fetch the corresponding profile from the 'profiles' table
+				const { data: profile, error } = await supabase
+					.from("profiles")
+					.select("username, first_name, last_name, phone_number")
+					.eq("id", user.id)
+					.single();
+
+				if (error) {
+					console.warn(error);
+				} else if (profile) {
+					setUsername(profile.username || "");
+					setFirstName(profile.first_name || "");
+					setLastName(profile.last_name || "");
+					setPhoneNumber(profile.phone_number || "");
+				}
+			}
+			setLoading(false);
 		};
-		fetchUser();
+		fetchData();
 	}, []);
 
+	// Function to update the user's profile details
+	const handleProfileUpdate = async () => {
+		if (!user) return;
+
+		setLoading(true);
+		const { error } = await supabase.from("profiles").upsert({
+			id: user.id, // The user's ID
+			username,
+			first_name: firstName,
+			last_name: lastName,
+			phone_number: phoneNumber,
+			updated_at: new Date().toISOString(),
+		});
+
+		if (error) {
+			if (error.code === "23505") {
+				// Code for unique violation in PostgreSQL
+				notifications.show({
+					title: "Username Taken",
+					message:
+						"That username is already in use. Please choose another one.",
+					color: "red",
+				});
+			} else {
+				notifications.show({
+					title: "Error",
+					message: error.message,
+					color: "red",
+				});
+			}
+		} else {
+			notifications.show({
+				title: "Success!",
+				message: "Your profile has been updated.",
+				color: "green",
+			});
+		}
+		setLoading(false);
+	};
+
 	const handlePasswordUpdate = async () => {
-		if (newPassword.length < 6) {
+		if (newPassword.length < 8) {
 			notifications.show({
 				title: "Password Too Short",
 				message:
-					"Please enter a password that is at least 6 characters long.",
+					"Please enter a password that is at least 8 characters long.",
 				color: "yellow",
 			});
 			return;
@@ -101,25 +171,66 @@ export default function SettingsPage() {
 						</Text>
 					</Box>
 
-					{/* Account Information Section */}
-					<Paper>
-						{" "}
-						{/* Uses default styles */}
+					{/* Profile Details Section */}
+					<Paper withBorder shadow="sm" p="lg" radius="md">
 						<Title order={4} fw={700}>
-							Account Information
+							Profile Details
 						</Title>
-						<Group justify="space-between" mt="md">
-							<Text size="sm" c="dimmed">
-								Email
-							</Text>
-							<Text size="sm" fw={500}>
-								{user ? user.email : "Loading..."}
-							</Text>
-						</Group>
+						<Text size="sm" c="dimmed" mt="xs">
+							Your email address is permanent.
+						</Text>
+						<Stack mt="md">
+							<TextInput
+								label="Email"
+								value={user ? user.email : ""}
+								disabled
+							/>
+							<TextInput
+								label="Username"
+								placeholder="Your public display name"
+								value={username}
+								onChange={(e) =>
+									setUsername(e.currentTarget.value)
+								}
+							/>
+							<Group grow>
+								<TextInput
+									label="First Name"
+									placeholder="e.g., Jane"
+									value={firstName}
+									onChange={(e) =>
+										setFirstName(e.currentTarget.value)
+									}
+								/>
+								<TextInput
+									label="Last Name"
+									placeholder="e.g., Doe"
+									value={lastName}
+									onChange={(e) =>
+										setLastName(e.currentTarget.value)
+									}
+								/>
+							</Group>
+							<TextInput
+								label="Phone Number"
+								placeholder="Your phone number"
+								value={phoneNumber}
+								onChange={(e) =>
+									setPhoneNumber(e.currentTarget.value)
+								}
+							/>
+							<Button
+								onClick={handleProfileUpdate}
+								loading={loading}
+								mt="sm"
+							>
+								Save Profile
+							</Button>
+						</Stack>
 					</Paper>
 
 					{/* Change Password Section */}
-					<Paper>
+					<Paper withBorder shadow="sm" p="lg" radius="md">
 						<Title order={4} fw={700}>
 							Change Password
 						</Title>
@@ -152,7 +263,7 @@ export default function SettingsPage() {
 					</Paper>
 
 					{/* Danger Zone Section */}
-					<Paper>
+					<Paper withBorder shadow="sm" p="lg" radius="md">
 						<Title order={4} fw={700} c="red.8">
 							Danger Zone
 						</Title>
