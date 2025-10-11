@@ -11,11 +11,11 @@ type EditPageProps = {
 
 // Page components in the App Router are Server Components by default.
 // They can directly access params without hooks or promises.
-export default function EditPage({ params }: EditPageProps) {
-	// Here, we pass the id to the client component as a simple string prop.
+export default async function EditPage({ params }: { params: Promise<{ id: string }> }) {
+	const { id } = await params;
 	return (
 		<Box>
-			<EditEntryForm id={params.id} />
+			<EditEntryForm id={id} />
 			<BottomNavBar />
 		</Box>
 	);
