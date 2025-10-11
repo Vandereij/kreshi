@@ -33,9 +33,11 @@ type JournalEntry = {
 	date: string;
 };
 
+// --- UPDATE: The Profile type ---
 type Profile = {
 	username?: string;
 	first_name?: string;
+	display_name_preference?: string; // Add the new field
 };
 
 export default function HomePage() {
@@ -93,9 +95,10 @@ export default function HomePage() {
 				setSession(session);
 				fetchEntries();
 
+				// --- UPDATE: Fetch the new preference column ---
 				const { data: profileData, error } = await supabase
 					.from("profiles")
-					.select("username, first_name")
+					.select("username, first_name, display_name_preference")
 					.eq("id", session.user.id)
 					.single();
 
@@ -124,8 +127,7 @@ export default function HomePage() {
 		if (!session) return;
 		if (!mood) {
 			notifications.show({
-				message:
-					"Please select a mood or write something before saving.",
+				message: "Please select a mood before saving.",
 				color: "yellow",
 			});
 			return;
@@ -136,7 +138,7 @@ export default function HomePage() {
 			.from("journal_entries")
 			.insert({ mood, feelings, content });
 
-		setLoading(false); // Stop loading indicator immediately after the DB operation
+		setLoading(false);
 
 		if (error) {
 			notifications.show({
@@ -180,11 +182,27 @@ export default function HomePage() {
 		}
 	};
 
-	const displayName =
-		profile?.username ||
-		profile?.first_name ||
-		session.user?.email?.split("@")[0] ||
-		"";
+	// --- UPDATE: Logic for displaying the user's preferred name ---
+	const getDisplayName = () => {
+		if (!profile && session.user?.email) {
+			return session.user.email.split("@")[0];
+		}
+		if (
+			profile?.display_name_preference === "first_name" &&
+			profile.first_name
+		) {
+			return profile.first_name;
+		}
+		// Fallback chain
+		return (
+			profile?.username ||
+			profile?.first_name ||
+			session.user?.email?.split("@")[0] ||
+			""
+		);
+	};
+
+	const displayName = getDisplayName();
 
 	return (
 		<Box style={{ paddingBottom: "90px" }}>
@@ -206,6 +224,9 @@ export default function HomePage() {
 							How are you feeling today?
 						</Title>
 						<MoodSelector value={mood} onChange={setMood} />
+						<Text ta="center" size="md" fw={600}>
+							{selectedMoodObject?.label}
+						</Text>
 						<Collapse in={!!selectedMoodObject}>
 							<Title order={4} fw={700} pb={16}>
 								Add more specific feelings?

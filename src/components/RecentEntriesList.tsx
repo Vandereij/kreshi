@@ -1,13 +1,22 @@
 // src/components/RecentEntriesList.tsx
 "use client";
 
-import { useState, useEffect } from "react"; // Import useState and useEffect
-import { Paper, Title, Text, Accordion, Group, Badge, Skeleton } from "@mantine/core";
+import { useState, useEffect } from "react";
+import {
+	Paper,
+	Title,
+	Text,
+	Accordion,
+	Group,
+	Badge,
+	Skeleton,
+	Button,
+} from "@mantine/core";
+import { useRouter } from "next/navigation";
 import type { JournalEntry } from "@/app/progress/page";
 
 export function RecentEntriesList({ entries }: { entries: JournalEntry[] }) {
-	// --- THE FIX: PART 1 ---
-	// Create a state to track if the component has mounted on the client
+	const router = useRouter();
 	const [hasMounted, setHasMounted] = useState(false);
 	useEffect(() => {
 		setHasMounted(true);
@@ -23,13 +32,9 @@ export function RecentEntriesList({ entries }: { entries: JournalEntry[] }) {
 					<Accordion.Item key={entry.id} value={entry.id}>
 						<Accordion.Control>
 							<Text fw={600} component="div">
-								{/* --- THE FIX: PART 2 --- */}
-								{/* Conditionally render the date */}
-								{/* On the server (and initial client render), show a placeholder */}
 								{!hasMounted ? (
 									<Skeleton height={16} width="50%" />
 								) : (
-									// After mounting, show the correctly formatted date for the user's locale
 									new Date(entry.created_at).toLocaleString(
 										"en-US",
 										{
@@ -44,11 +49,23 @@ export function RecentEntriesList({ entries }: { entries: JournalEntry[] }) {
 							</Text>
 						</Accordion.Control>
 						<Accordion.Panel>
-							{entry.mood && (
-								<Badge color="gray" variant="light" mb="sm">
-									{entry.mood}
-								</Badge>
-							)}
+							<Group justify="space-between" mb="sm">
+								{entry.mood && (
+									<Badge color="gray" variant="light">
+										{entry.mood}
+									</Badge>
+								)}
+								<Button
+									variant="light"
+									size="xs"
+									onClick={() =>
+										router.push(`/edit/${entry.id}`)
+									}
+								>
+									Edit
+								</Button>
+							</Group>
+
 							{entry.content ? (
 								<Text>{entry.content}</Text>
 							) : (

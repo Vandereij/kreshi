@@ -16,6 +16,7 @@ import {
 	Group,
 	Divider,
 	TextInput,
+	SegmentedControl, // Import the new component
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { BottomNavBar } from "@/components/BottomNavBar";
@@ -31,6 +32,9 @@ export default function SettingsPage() {
 	const [firstName, setFirstName] = useState("");
 	const [lastName, setLastName] = useState("");
 	const [phoneNumber, setPhoneNumber] = useState("");
+	// --- NEW: State for display name preference ---
+	const [displayNamePreference, setDisplayNamePreference] =
+		useState("username");
 
 	// State for Password Change
 	const [newPassword, setNewPassword] = useState("");
@@ -40,17 +44,18 @@ export default function SettingsPage() {
 	useEffect(() => {
 		const fetchData = async () => {
 			setLoading(true);
-			// Fetches the current logged-in user's data
 			const {
 				data: { user },
 			} = await supabase.auth.getUser();
 			setUser(user);
 
 			if (user) {
-				// Fetch the corresponding profile from the 'profiles' table
+				// --- UPDATE: Fetch the new preference column ---
 				const { data: profile, error } = await supabase
 					.from("profiles")
-					.select("username, first_name, last_name, phone_number")
+					.select(
+						"username, first_name, last_name, phone_number, display_name_preference"
+					)
 					.eq("id", user.id)
 					.single();
 
@@ -61,6 +66,10 @@ export default function SettingsPage() {
 					setFirstName(profile.first_name || "");
 					setLastName(profile.last_name || "");
 					setPhoneNumber(profile.phone_number || "");
+					// --- UPDATE: Set the preference state ---
+					setDisplayNamePreference(
+						profile.display_name_preference || "username"
+					);
 				}
 			}
 			setLoading(false);
@@ -68,23 +77,24 @@ export default function SettingsPage() {
 		fetchData();
 	}, []);
 
-	// Function to update the user's profile details
+	// --- UPDATE: The profile update function ---
 	const handleProfileUpdate = async () => {
 		if (!user) return;
 
 		setLoading(true);
 		const { error } = await supabase.from("profiles").upsert({
-			id: user.id, // The user's ID
+			id: user.id,
 			username,
 			first_name: firstName,
 			last_name: lastName,
 			phone_number: phoneNumber,
+			// --- UPDATE: Save the new preference ---
+			display_name_preference: displayNamePreference,
 			updated_at: new Date().toISOString(),
 		});
 
 		if (error) {
 			if (error.code === "23505") {
-				// Code for unique violation in PostgreSQL
 				notifications.show({
 					title: "Username Taken",
 					message:
@@ -154,14 +164,13 @@ export default function SettingsPage() {
 	const handleSignOut = async () => {
 		setLoading(true);
 		await supabase.auth.signOut();
-		router.push("/auth"); // Redirect to the login page after sign out
+		router.push("/auth");
 	};
 
 	return (
 		<Box style={{ paddingBottom: "80px" }}>
 			<Container size="sm" py="xl">
 				<Stack gap="lg">
-					{/* Header Section */}
 					<Box>
 						<Title order={2} fw={800}>
 							Settings
@@ -171,15 +180,33 @@ export default function SettingsPage() {
 						</Text>
 					</Box>
 
-					{/* Profile Details Section */}
 					<Paper withBorder shadow="sm" p="lg" radius="md">
 						<Title order={4} fw={700}>
 							Profile Details
 						</Title>
-						<Text size="sm" c="dimmed" mt="xs">
-							Your email address is permanent.
-						</Text>
 						<Stack mt="md">
+							{/* --- NEW: UI for display name preference --- */}
+							<Box>
+								<Text size="sm" fw={500}>
+									Greet me by my
+								</Text>
+								<SegmentedControl
+									fullWidth
+									mt={4}
+									value={displayNamePreference}
+									onChange={setDisplayNamePreference}
+									data={[
+										{
+											label: "First Name",
+											value: "first_name",
+										},
+										{
+											label: "Username",
+											value: "username",
+										},
+									]}
+								/>
+							</Box>
 							<TextInput
 								label="Email"
 								value={user ? user.email : ""}
@@ -229,7 +256,6 @@ export default function SettingsPage() {
 						</Stack>
 					</Paper>
 
-					{/* Change Password Section */}
 					<Paper withBorder shadow="sm" p="lg" radius="md">
 						<Title order={4} fw={700}>
 							Change Password
@@ -262,7 +288,6 @@ export default function SettingsPage() {
 						</Stack>
 					</Paper>
 
-					{/* Danger Zone Section */}
 					<Paper withBorder shadow="sm" p="lg" radius="md">
 						<Title order={4} fw={700} c="red.8">
 							Danger Zone
