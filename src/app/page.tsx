@@ -22,7 +22,7 @@ import { AiInsightCard } from "@/components/AiInsightCard";
 import { BottomNavBar } from "@/components/BottomNavBar";
 import { moods } from "@/data/moods";
 import { feelingsByMood } from "@/data/feelings";
-import type { Session, UserMetadata } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
 import SpeechRecognition, {
 	useSpeechRecognition,
 } from "react-speech-recognition";
@@ -53,7 +53,6 @@ export default function HomePage() {
 		isLoading: isAiLoading,
 		error: aiError,
 		generateNewPrompt,
-		clearPrompts,
 		canRefresh,
 	} = usePersistentPrompts(entries);
 
@@ -146,7 +145,6 @@ export default function HomePage() {
 				color: "red",
 			});
 		} else {
-			clearPrompts();
 			notifications.show({
 				title: "Saved!",
 				message: "Your entry has been recorded.",

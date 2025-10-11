@@ -10,7 +10,8 @@ export async function POST(req: Request) {
     }
 
     // --- CHANGE: Ask for ONLY ONE prompt ---
-    const systemPrompt = "You are a thoughtful journaling assistant. Based on the user's recurring themes, create exactly one insightful and gentle prompt to help them explore their feelings more deeply. The prompt must be a single, concise sentence. **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
+    const systemPrompt = "You are a thoughtful journaling assistant. Based on the user's recurring themes, create exactly one insightful and gentle prompt to help them explore their feelings more deeply. The prompt must be a single, concise sentence, following CBT analysis and best practice. **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
+    // const systemPrompt = "You are a thoughtful journaling assistant. Based on the user's recurring themes, create exactly one insightful and gentle prompt to help them explore their feelings more deeply. The prompt must be a single, concise sentence. **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
     const userPrompt = `Recent themes: ${themes.join(', ')}.`;
 
     if (!process.env.OPENAI_API_KEY) {
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
         model: 'gpt-4o-mini',
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
         temperature: 0.7,
-        max_tokens: 120,
+        max_tokens: 150,
       }),
     });
 
