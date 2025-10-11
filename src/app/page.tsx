@@ -122,7 +122,7 @@ export default function HomePage() {
 
 	const handleSaveEntry = async () => {
 		if (!session) return;
-		if (!mood && feelings.length === 0 && !content.trim()) {
+		if (!mood) {
 			notifications.show({
 				message:
 					"Please select a mood or write something before saving.",
@@ -206,9 +206,6 @@ export default function HomePage() {
 							How are you feeling today?
 						</Title>
 						<MoodSelector value={mood} onChange={setMood} />
-						<Text ta="center" size="md" fw={600}>
-							{selectedMoodObject?.label}
-						</Text>
 						<Collapse in={!!selectedMoodObject}>
 							<Title order={4} fw={700} pb={16}>
 								Add more specific feelings?
