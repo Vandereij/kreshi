@@ -1,7 +1,7 @@
 // src/components/AppHeader.tsx
 "use client";
 
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import {
 	Box,
@@ -24,7 +24,7 @@ export function AppHeader({ title, description }: AppHeaderProps) {
 	const router = useRouter();
 
 	const handleSignOut = async () => {
-		await supabase.auth.signOut();
+		await createClient().auth.signOut();
 		router.push("/auth");
 	};
 

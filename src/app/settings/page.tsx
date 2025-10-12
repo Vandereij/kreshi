@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import {
 	Container,
@@ -46,12 +46,12 @@ export default function SettingsPage() {
 			setLoading(true);
 			const {
 				data: { user },
-			} = await supabase.auth.getUser();
+			} = await createClient().auth.getUser();
 			setUser(user);
 
 			if (user) {
 				// --- UPDATE: Fetch the new preference column ---
-				const { data: profile, error } = await supabase
+				const { data: profile, error } = await createClient()
 					.from("profiles")
 					.select(
 						"username, first_name, last_name, phone_number, display_name_preference"
@@ -82,7 +82,7 @@ export default function SettingsPage() {
 		if (!user) return;
 
 		setLoading(true);
-		const { error } = await supabase.from("profiles").upsert({
+		const { error } = await createClient().from("profiles").upsert({
 			id: user.id,
 			username,
 			first_name: firstName,
@@ -139,7 +139,7 @@ export default function SettingsPage() {
 		}
 
 		setLoading(true);
-		const { error } = await supabase.auth.updateUser({
+		const { error } = await createClient().auth.updateUser({
 			password: newPassword,
 		});
 
@@ -163,7 +163,7 @@ export default function SettingsPage() {
 
 	const handleSignOut = async () => {
 		setLoading(true);
-		await supabase.auth.signOut();
+		await createClient().auth.signOut();
 		router.push("/auth");
 	};
 

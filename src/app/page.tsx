@@ -3,7 +3,7 @@
 
 import "regenerator-runtime/runtime";
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import {
 	Container,
@@ -66,7 +66,7 @@ export default function HomePage() {
 	} = useSpeechRecognition();
 
 	const fetchEntries = useCallback(async () => {
-		const { data, error } = await supabase
+		const { data, error } = await createClient()
 			.from("journal_entries")
 			.select("content, created_at")
 			.order("created_at", { ascending: true });
@@ -89,14 +89,14 @@ export default function HomePage() {
 		const fetchSessionAndProfile = async () => {
 			const {
 				data: { session },
-			} = await supabase.auth.getSession();
+			} = await createClient().auth.getSession();
 
 			if (session) {
 				setSession(session);
 				fetchEntries();
 
 				// --- UPDATE: Fetch the new preference column ---
-				const { data: profileData, error } = await supabase
+				const { data: profileData, error } = await createClient()
 					.from("profiles")
 					.select("username, first_name, display_name_preference")
 					.eq("id", session.user.id)
@@ -134,7 +134,7 @@ export default function HomePage() {
 		}
 
 		setLoading(true);
-		const { error } = await supabase
+		const { error } = await createClient()
 			.from("journal_entries")
 			.insert({ mood, feelings, content });
 

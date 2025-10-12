@@ -3,7 +3,7 @@
 
 import "regenerator-runtime/runtime";
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import {
 	Container,
@@ -48,7 +48,7 @@ export function EditEntryForm({ id }: EditEntryFormProps) {
 
 	// The fetchEntry function now uses the 'id' prop directly
 	const fetchEntry = useCallback(async () => {
-		const { data, error } = await supabase
+		const { data, error } = await createClient()
 			.from("journal_entries")
 			.select("*")
 			.eq("id", id)
@@ -74,7 +74,7 @@ export function EditEntryForm({ id }: EditEntryFormProps) {
 		const fetchSession = async () => {
 			const {
 				data: { session },
-			} = await supabase.auth.getSession();
+			} = await createClient().auth.getSession();
 
 			if (session) {
 				setSession(session);
@@ -103,7 +103,7 @@ export function EditEntryForm({ id }: EditEntryFormProps) {
 		}
 
 		setLoading(true);
-		const { error } = await supabase
+		const { error } = await createClient()
 			.from("journal_entries")
 			.update({ mood, feelings, content })
 			.eq("id", id);

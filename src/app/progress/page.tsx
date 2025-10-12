@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import {
 	Container,
 	Title,
@@ -34,7 +34,7 @@ export default function ProgressPage() {
 	useEffect(() => {
 		const fetchEntries = async () => {
 			setLoading(true);
-			const { data, error } = await supabase
+			const { data, error } = await createClient()
 				.from("journal_entries")
 				.select("*")
 				.order("created_at", { ascending: false }); // Fetch newest first

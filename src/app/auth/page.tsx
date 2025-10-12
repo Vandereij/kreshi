@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import {
 	Container,
@@ -50,7 +50,7 @@ export default function AuthPage() {
 		setLoading(true);
 		setError(null);
 		setSuccessMessage(null);
-		const { error } = await supabase.auth.signUp({
+		const { error } = await createClient().auth.signUp({
 			email,
 			password,
 		});
@@ -69,7 +69,7 @@ export default function AuthPage() {
 		setLoading(true);
 		setError(null);
 		setSuccessMessage(null);
-		const { error } = await supabase.auth.signInWithPassword({
+		const { error } = await createClient().auth.signInWithPassword({
 			email,
 			password,
 		});
@@ -92,7 +92,7 @@ export default function AuthPage() {
 		const redirectURL =
 			process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000/";
 
-		const { error } = await supabase.auth.signInWithOtp({
+		const { error } = await createClient().auth.signInWithOtp({
 			email,
 			options: {
 				// This is the URL the user will be redirected to after clicking the magic link.
