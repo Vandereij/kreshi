@@ -12,30 +12,55 @@ export async function POST(req: Request) {
 			);
 		}
 
-		// --- CHANGE: Ask for ONLY ONE prompt ---
+		// const systemPrompt =
+		// 	"You are a thoughtful journaling assistant. Based on the user's recurring themes, create exactly one insightful and gentle prompt to help them explore their feelings more deeply. The prompt must be a single, concise sentence, following CBT analysis and best practice. **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
+
 		const systemPrompt =
-			"You are a thoughtful journaling assistant. Based on the user's recurring themes, create exactly one insightful and gentle prompt to help them explore their feelings more deeply. The prompt must be a single, concise sentence, following CBT analysis and best practice. **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
+			"You are a thoughtful journaling assistant. Based on the user's recurring themes, create exactly one insightful and gentle prompt to help them explore their feelings from a unique and novel angle. The prompt must be a single, concise sentence. **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
 		const userPrompt = `Recent themes: ${themes.join(", ")}.`;
 
-		if (!process.env.OPENAI_API_KEY || !process.env.CLAUDE_API_KEY) {
-			throw new Error("API_KEY is not set.");
+		if (!process.env.MISTRAL_API_KEY) {
+			throw new Error("MISTRAL_API_KEY is not set.");
 		}
 
-		const response = await fetch("https://api.anthropic.com/v1/messages", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				"x-api-key": process.env.CLAUDE_API_KEY,
-				"anthropic-version": "2023-06-01",
-			},
-			body: JSON.stringify({
-				model: "claude-sonnet-4-5",
-				max_tokens: 150,
-				temperature: 0.7,
-				system: systemPrompt,
-				messages: [{ role: "user", content: userPrompt }],
-			}),
-		});
+		const response = await fetch(
+			"https://api.mistral.ai/v1/chat/completions",
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${process.env.MISTRAL_API_KEY}`,
+				},
+				cache: "no-store",
+				body: JSON.stringify({
+					model: "mistral-medium-latest",
+					messages: [
+						{ role: "system", content: systemPrompt },
+						{ role: "user", content: userPrompt },
+					],
+					temperature: 0.7,
+					max_tokens: 150,
+				}),
+			}
+		);
+
+		// const response = await fetch("https://api.anthropic.com/v1/messages", {
+		//   method: "POST",
+		//   headers: {
+		//     "Content-Type": "application/json",
+		//     "x-api-key": process.env.CLAUDE_API_KEY,
+		//     "anthropic-version": "2023-06-01"
+		//   },
+		//   body: JSON.stringify({
+		//     model: "claude-3-5-haiku-latest",
+		//     max_tokens: 150,
+		//     temperature: 0.7,
+		//     system: systemPrompt,
+		//     messages: [
+		//       { role: "user", content: userPrompt }
+		//     ]
+		//   })
+		// });
 
 		// const response = await fetch('https://api.openai.com/v1/chat/completions', {
 		//   method: 'POST',
@@ -49,8 +74,6 @@ export async function POST(req: Request) {
 		// });
 
 		if (!response.ok) {
-			const errorBody = await response.text();
-			console.error("OpenAI API Error:", errorBody);
 			return NextResponse.json(
 				{ error: `API request failed with status ${response.status}` },
 				{ status: response.status }
@@ -58,18 +81,14 @@ export async function POST(req: Request) {
 		}
 
 		const data = await response.json();
-		let prompt = data.content?.[0]?.text ?? "";
-		// let prompt = data.choices[0]?.message?.content;
+		let prompt = data.choices[0]?.message?.content;
 
 		if (!prompt) {
 			return NextResponse.json({ prompt: "" });
 		}
 
-		// --- CHANGE: Simpler cleanup for a single string ---
-		// Remove any surrounding quotes that the AI might still add
 		prompt = prompt.trim().replace(/^"|"$/g, "");
 
-		// --- CHANGE: Return a single prompt object ---
 		return NextResponse.json({ prompt });
 	} catch (error) {
 		console.error("Error in /api/ai/prompts:", error);
