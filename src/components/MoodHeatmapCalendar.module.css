@@ -1,0 +1,4 @@
+.calendar button[data-disabled="true"] {
+	opacity: 0.4;
+	cursor: default;
+}

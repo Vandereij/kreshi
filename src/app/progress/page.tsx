@@ -76,6 +76,10 @@ export default function ProgressPage() {
 		}
 	};
 
+	const handleEntryDeleted = (deletedEntryId: string) => {
+		setAllEntries(prevEntries => prevEntries.filter(entry => entry.id !== deletedEntryId));
+	};
+
 	if (loading) {
 		return (
 			<Box
@@ -128,8 +132,6 @@ export default function ProgressPage() {
 						</Paper>
 					) : (
 						<>
-							{/* ---- THIS IS THE FIX ---- */}
-							{/* Pass the selectedDate state down to the calendar component */}
 							<MoodHeatmapCalendar
 								entries={allEntries}
 								onDayClick={handleDayClick}
@@ -141,6 +143,7 @@ export default function ProgressPage() {
 								entriesForSelectedDay.length > 0 && (
 									<RecentEntriesList
 										entries={entriesForSelectedDay}
+										onEntryDeleted={handleEntryDeleted}
 									/>
 								)}
 

@@ -1,12 +1,13 @@
 // src/components/MoodHeatmapCalendar.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react"; // Import useMemo
+import { useState, useEffect, useMemo } from "react";
 import { Calendar } from "@mantine/dates";
 import { Paper, Title, Text, useMantineTheme } from "@mantine/core";
 import { IconChevronUp, IconChevronDown } from "@tabler/icons-react";
 import type { JournalEntry } from "@/app/progress/page";
 import type { DayProps, PickerControlProps } from "@mantine/dates";
+import classes from "./MoodHeatmapCalendar.module.css";
 
 const moodToValue: { [key: string]: number } = {
 	awful: 1,
@@ -30,6 +31,11 @@ export function MoodHeatmapCalendar({
 }: MoodHeatmapCalendarProps) {
 	const theme = useMantineTheme();
 	const [dateInView, setDateInView] = useState(selectedDate || new Date());
+	const today = useMemo(() => {
+		const now = new Date();
+		now.setHours(0, 0, 0, 0);
+		return now;
+	}, []);
 
 	useEffect(() => {
 		if (selectedDate) {
@@ -91,6 +97,9 @@ export function MoodHeatmapCalendar({
 
 	const getDayProps = (dateString: string): Partial<DayProps> => {
 		const date = new Date(dateString);
+		date.setHours(0, 0, 0, 0);
+
+		const isDisabled = date > today;
 		const isSelected = selectedDate !== null && date.toDateString() === selectedDate.toDateString();
 
 		const dayData = dailyAverages[date.toDateString()];
@@ -99,6 +108,7 @@ export function MoodHeatmapCalendar({
 		const color = hasData ? heatmapColors[averageMood - 1] : "transparent";
 
 		return {
+			disabled: isDisabled,
 			onClick: () => onDayClick(date),
 			style: {
 				...getCommonControlProps(isSelected).style,
@@ -125,7 +135,7 @@ export function MoodHeatmapCalendar({
 			...commonProps,
 			style: {
 				...commonProps.style,
-				backgroundColor: color, // Set background color based on monthly average
+				backgroundColor: color,
 				...(isSelected && {
 					width: "44px",
 					height: "44px",
@@ -153,7 +163,7 @@ export function MoodHeatmapCalendar({
 			...commonProps,
 			style: {
 				...commonProps.style,
-				backgroundColor: color, // Set background color based on yearly average
+				backgroundColor: color,
 				...(isSelected && {
 					width: "44px",
 					height: "44px",
@@ -182,6 +192,7 @@ export function MoodHeatmapCalendar({
 				getYearControlProps={getYearControlProps}
 				nextIcon={<IconChevronDown size={16} />}
 				previousIcon={<IconChevronUp size={16} />}
+				className={classes.calendar}
 				styles={{
 					calendarHeader: {
 						width: "200px",
