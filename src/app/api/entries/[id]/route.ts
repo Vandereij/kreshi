@@ -1,14 +1,15 @@
 // app/api/entries/[id]/route.ts
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { createClientRSC } from "@/lib/supabase/server";
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+type RouteContext = {
+  params: { id: string };
+};
+
+export async function DELETE(_request: Request, context: RouteContext) {
   try {
     const supabase = await createClientRSC();
-    const { id } = params;
+    const { id } = context.params;
 
     if (!id) {
       return NextResponse.json(
@@ -20,12 +21,12 @@ export async function DELETE(
     const { error } = await supabase
       .from("journal_entries")
       .delete()
-      .match({ id: id });
+      .eq("id", id); // .eq is clearer than .match for a single column
 
     if (error) {
       console.error("Supabase error deleting entry:", error);
       return NextResponse.json(
-        { message: "Error deleting entry from database", error },
+        { message: "Error deleting entry from database" },
         { status: 500 }
       );
     }
