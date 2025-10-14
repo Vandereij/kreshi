@@ -1,28 +1,37 @@
 // app/api/entries/[id]/route.ts
-import { NextResponse } from "next/server";
-import { createClientRSC } from "@/lib/supabase/server"; // Adjust the import path as needed
+import { NextResponse, type NextRequest } from "next/server";
+import { createClientRSC } from "@/lib/supabase/server";
 
-export async function DELETE(
-	request: Request,
-	{ params }: { params: { id: string } }
-) {
-	// Add the 'await' keyword here
-	const supabase = await createClientRSC(); 
-	const { id } = params;
+type DeleteContext = {
+  params: {
+    id: string;
+  };
+};
 
-	// Note: Replace 'journal_entries' with the actual name of your table in Supabase.
-	const { error } = await supabase
-		.from("journal_entries")
-		.delete()
-		.match({ id: id });
+export async function DELETE(request: NextRequest, context: DeleteContext) {
+  try {
+    const supabase = await createClientRSC();
+    const { id } = context.params;
 
-	if (error) {
-		console.error("Supabase error deleting entry:", error);
-		return new NextResponse(
-			JSON.stringify({ message: "Error deleting entry", error }),
-			{ status: 500 }
-		);
-	}
+    const { error } = await supabase
+      .from("journal_entries")
+      .delete()
+      .match({ id: id });
 
-	return new NextResponse(null, { status: 204 }); // 204 No Content is a standard response for a successful deletion
+    if (error) {
+      console.error("Supabase error deleting entry:", error);
+      return new NextResponse(
+        JSON.stringify({ message: "Error deleting entry", error }),
+        { status: 500 }
+      );
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (e) {
+    console.error("Error in DELETE handler:", e);
+    return new NextResponse(
+      JSON.stringify({ message: "An unexpected error occurred." }),
+      { status: 500 }
+    );
+  }
 }
