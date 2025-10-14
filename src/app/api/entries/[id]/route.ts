@@ -2,16 +2,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClientRSC } from "@/lib/supabase/server";
 
-type DeleteContext = {
-  params: {
-    id: string;
-  };
-};
-
-export async function DELETE(request: NextRequest, context: DeleteContext) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const supabase = await createClientRSC();
-    const { id } = context.params;
+    const { id } = params;
 
     const { error } = await supabase
       .from("journal_entries")

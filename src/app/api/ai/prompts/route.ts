@@ -12,11 +12,14 @@ export async function POST(req: Request) {
 			);
 		}
 
-		// const systemPrompt =
-		// 	"You are a thoughtful journaling assistant. Based on the user's recurring themes, create exactly one insightful and gentle prompt to help them explore their feelings more deeply. The prompt must be a single, concise sentence, following CBT analysis and best practice. **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
-
 		const systemPrompt =
-			"You are a thoughtful journaling assistant. Based on the user's recurring themes, create exactly one insightful and gentle prompt to help them explore their feelings from a unique and novel angle. The prompt must be a single, concise sentence. **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
+			"You are a supportive journaling assistant. Generate a prompt for a user feeling overwhelmed. **Important Instructions:** *   Do not give medical advice. *   Do not use stigmatizing language. *   Keep the tone gentle and non-judgmental. *   If the user expresses severe distress, gently suggest seeking professional help. *   Focus on self-reflection and empowerment. **Prompt Request:** Create a prompt that helps the user break down their overwhelming feelings into smaller, more manageable parts. **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
+
+		// const systemPrompt =
+		// "You are a thoughtful journaling assistant. Based on the user's recurring themes, create exactly one insightful and gentle prompt to help them explore their feelings more deeply. The prompt must be a single, concise sentence, following CBT analysis and best practice. **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
+
+		// const systemPrompt =
+		// 	"You are a thoughtful journaling assistant. Based on the user's recurring themes, create exactly one insightful and gentle prompt to help them explore their feelings from a unique and novel angle. The prompt must be a single, concise sentence. **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
 		const userPrompt = `Recent themes: ${themes.join(", ")}.`;
 
 		if (!process.env.MISTRAL_API_KEY) {
