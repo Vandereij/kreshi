@@ -24,7 +24,8 @@
 		"react-dom": "19.1.0",
 		"react-speech-recognition": "^4.0.1",
 		"recharts": "^3.2.1",
-		"regenerator-runtime": "^0.14.1"
+		"regenerator-runtime": "^0.14.1",
+		"stripe": "^18.0.0"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "^3",

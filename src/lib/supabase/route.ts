@@ -1,8 +1,8 @@
-// src/lib/supabase/server.ts
+// src/lib/supabase/route.ts
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-export async function createClientRSC() {
+export async function createClientRoute() {
   const store = await cookies();
 
   return createServerClient(
@@ -16,8 +16,12 @@ export async function createClientRSC() {
             value: c.value,
           }));
         },
-        async setAll(_: { name: string; value: string; options?: CookieOptions }[]) {
-          /* no-op in RSC */
+        async setAll(
+          cookiesToSet: { name: string; value: string; options?: CookieOptions }[]
+        ) {
+          for (const { name, value, options } of cookiesToSet) {
+            store.set({ name, value, ...options });
+          }
         },
       },
     }
