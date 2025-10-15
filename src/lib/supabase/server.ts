@@ -16,7 +16,7 @@ export async function createClientRSC() {
             value: c.value,
           }));
         },
-        async setAll(_: { name: string; value: string; options?: CookieOptions }[]) {
+        async setAll() {
           /* no-op in RSC */
         },
       },
