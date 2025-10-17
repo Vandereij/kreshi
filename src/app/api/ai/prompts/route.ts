@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
 		// 3) Prompts
 		const systemPrompt =
-			"You are a supportive journaling assistant. Generate a prompt for a user feeling overwhelmed. **Important Instructions:** * Do not give medical advice. * Do not use stigmatizing language. * Keep the tone gentle and non-judgmental. * If the user expresses severe distress, gently suggest seeking professional help. * Focus on self-reflection and empowerment. * The sentence should be complete, don't return sentences that are interrupted * Max 50 words **Prompt Request:** Create a prompt that helps the user break down their overwhelming feelings into smaller, more manageable parts. **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
+			"You are a supportive journaling assistant. Generate a prompt for a user feeling overwhelmed. **Important Instructions:** * Do not give medical advice. * Do not use stigmatizing language. * Keep the tone gentle and non-judgmental. * If the user expresses severe distress, gently suggest seeking professional help. * Focus on self-reflection and empowerment. * The sentence should be complete, don't return sentences that are interrupted * Max 50 words **Prompt Request:** Create a prompt that helps the user break down their overwhelming feelings into smaller, more manageable parts. **Provide an explanation of how the prompt will help **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
 
 		// Keep it short and clear; order is significance if scoredThemes was provided
 		const userPrompt =

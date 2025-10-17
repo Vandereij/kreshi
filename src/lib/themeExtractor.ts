@@ -20,6 +20,11 @@ type ExtractOpts = {
   detailed?: boolean;            // default false (return string[])
 };
 
+interface CompromiseView {
+  text(): string;
+  has(tag: string): boolean;
+}
+
 // -----------------------------
 // Helpers
 // -----------------------------
@@ -34,12 +39,17 @@ function generateNgrams(tokens: string[], n: number): string[][] {
   return ngrams;
 }
 
-// Optional embeddings (MiniLM) via @xenova/transformers (loaded lazily)
-let embedderPromise: Promise<any> | null = null;
-async function getEmbedder() {
+// ✅ Typed embedder (MiniLM) via @xenova/transformers (loaded lazily)
+type FeatureExtractor = (
+  inputs: string | string[],
+  options?: { pooling?: 'mean' | 'none'; normalize?: boolean }
+) => Promise<{ data: number[][] }>;
+
+let embedderPromise: Promise<FeatureExtractor> | null = null;
+async function getEmbedder(): Promise<FeatureExtractor> {
   if (!embedderPromise) {
     const { pipeline } = await import('@xenova/transformers'); // no network calls; WASM local
-    embedderPromise = pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+    embedderPromise = pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2') as Promise<FeatureExtractor>;
   }
   return embedderPromise;
 }
@@ -147,9 +157,9 @@ export async function extractThemes(
   doc.places().out('array').forEach((p: string) => compromiseEntities.push(p));
   doc.organizations().out('array').forEach((o: string) => compromiseEntities.push(o));
 
-  // Compromise lacks fine-grained TS types; cast match as any
-  doc.match('#Noun+').forEach((match: any) => {
-    const phrase = (match.text() as string).toLowerCase();
+  // ✅ Typed match object
+  doc.match('#Noun+').forEach((match: CompromiseView ) => {
+    const phrase = match.text().toLowerCase();
     const words = phrase.split(/\s+/);
     const significantWords = words.filter((w: string) => w.length > 1 && !stopWords.has(w));
     if (significantWords.length >= 2 || (significantWords.length === 1 && match.has('#ProperNoun'))) {
@@ -168,7 +178,7 @@ export async function extractThemes(
   });
 
   // --- Step 2: Bigrams from filtered tokens ---
-  const rawTerms = doc.terms().out('array') as string[];
+  const rawTerms: string[] = doc.terms().out('array'); // ✅ typed
   const tokens = rawTerms
     .map((t: string) => t.toLowerCase())
     .map((t: string) => t.replace(/[^a-z0-9']/g, ''))
