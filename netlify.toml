@@ -1,11 +1,19 @@
 # netlify.toml
-
 [build]
   command = "next build"
-  publish = ".next"            # Netlify Next.js Runtime uses this
+  publish = ".next"
 
 [build.environment]
-  NODE_VERSION = "20"          # or "20" if your app needs it
+  NODE_VERSION = "20"
+  SHARP_IGNORE_GLOBAL_LIBVIPS = "1"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["sharp"]
+  included_files = [
+    "node_modules/sharp/**/*",
+    "node_modules/@img/sharp-*/**/*"
+  ]
