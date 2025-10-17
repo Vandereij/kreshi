@@ -65,8 +65,6 @@ export async function POST(req: Request) {
 
 		const prompt = text.trim().replace(/^"|"$/g, "");
 
-		const prompt = (text || "").trim().replace(/^"|"$/g, "");
-
 		return NextResponse.json({ prompt });
 	} catch (error) {
 		console.error("Error in /api/ai/prompts:", error);
