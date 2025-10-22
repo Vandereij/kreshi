@@ -28,7 +28,7 @@ module.exports = {
       },
       // You might also define custom font families here
       fontFamily: {
-        sans: ['"Inter"', 'sans-serif'], // Example, replace with your chosen elegant font
+        sans: ['"Manrope"', 'sans-serif'], // Example, replace with your chosen elegant font
       }
     },
   },

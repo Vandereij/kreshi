@@ -323,12 +323,12 @@ export const MoodWaveSelector3D: React.FC<MoodWaveSelectorProps> = ({
 
   return (
     <div className="flex flex-col items-center">
-      <h2 className="text-4xl font-bold text-dark-text mb-4">
+      <h2 className="text-[26px] font-extrabold text-dark-text mb-4">
         Feeling {selectedMoodLabel}
       </h2>
       <div
         ref={containerRef}
-        className="w-[400px] h-[400px] relative cursor-grab active:cursor-grabbing touch-none"
+        className="w-[300px] h-[300px] relative cursor-grab active:cursor-grabbing touch-none"
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerMove={handlePointerMove}
