@@ -5,3 +5,5 @@
 /* and the CSS import in your layout.tsx file. */
 /* You can add truly global, custom CSS overrides here later if needed, */
 /* but for now, it must be clean. */
+
+@import "tailwindcss";
