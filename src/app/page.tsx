@@ -222,14 +222,14 @@ export default function HomePage() {
 						onToggleListening={handleToggleListening}
 					/>
 					<motion.button
-						whileHover={{ scale: 1.02 }}
-						whileTap={{ scale: 0.98 }}
-						className="w-full bg-accent-teal text-white py-3 rounded-lg font-semibold mt-4 transition-colors duration-200 shadow-md hover:bg-opacity-90 disabled:bg-gray-400"
-						onClick={handleSaveEntry}
-						disabled={loading || !mood}
-					>
-						{loading ? "Saving..." : "Save Entry"}
-					</motion.button>
+    whileHover={{ scale: 1.02 }}
+    whileTap={{ scale: 0.98 }}
+    className="w-full bg-accent-teal text-white py-3 px-6 rounded-lg font-semibold mt-4 transition-colors duration-200 shadow-md hover:bg-opacity-90 disabled:bg-gray-400"
+    onClick={handleSaveEntry}
+    disabled={loading || !mood}
+>
+    {loading ? "Saving..." : "Save Entry"}
+</motion.button>
 				</motion.div>
 			</div>
 

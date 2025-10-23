@@ -17,9 +17,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   
-  // Add Turbopack configuration
-  experimental: {
-    turbo: {
+  turbopack: {
       rules: {
         '*.glsl': {
           loaders: ['raw-loader'],
@@ -42,7 +40,6 @@ const nextConfig: NextConfig = {
           as: '*.js',
         },
       },
-    },
   },
 };
 

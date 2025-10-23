@@ -2,7 +2,7 @@
 export default {
   plugins: {
     '@tailwindcss/postcss': {}, // You can keep tailwind for now or remove it
-    'autoprefixer': {},
     'postcss-preset-mantine': {},
+    'autoprefixer': {},
   },
 }
