@@ -107,7 +107,7 @@ export function AiInsightCard({
 						<ActionIcon
 							variant="light"
 							onClick={onGenerate}
-							disabled={!canRefresh}
+							disabled={!canRefresh || isLoading}
 							loading={isLoading}
 						>
 							<IconSparkles size="1rem" />

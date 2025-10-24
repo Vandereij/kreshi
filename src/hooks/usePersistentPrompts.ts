@@ -219,7 +219,7 @@ export const usePersistentPrompts = (
 		prevPlanRef.current = plan;
 	}, [plan, enabled, supabase, userId, loadFromDB]);
 
-	const canRefresh = enabled && usedCountToday < DAILY_LIMIT && !isLoading;
+	const canRefresh = enabled && usedCountToday < DAILY_LIMIT;
 
 	const persistPrompt = useCallback(
 		async (newPrompt: string) => {
