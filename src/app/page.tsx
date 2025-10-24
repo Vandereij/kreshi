@@ -7,7 +7,9 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { notifications } from "@mantine/notifications";
 import type { Session } from "@supabase/supabase-js";
-import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
+import SpeechRecognition, {
+	useSpeechRecognition,
+} from "react-speech-recognition";
 import { usePersistentPrompts } from "@/hooks/usePersistentPrompts";
 import { motion } from "framer-motion";
 
@@ -20,239 +22,256 @@ import { moods as predefinedMoods } from "@/data/moods";
 import { feelingsByMood } from "@/data/feelings";
 
 const Header = ({ displayName }: { displayName: string }) => (
-  <div className="flex justify-between items-center px-4 py-4">
-    <div className="w-8 h-8 rounded-full flex items-center justify-center"></div>
-    <h1 className="text-dark-text text-md font-extrabold">Flow & Clarity</h1>
-    <div className="w-8 h-8 rounded-full flex items-center justify-center"></div>
-  </div>
+	<div className="flex justify-between items-center px-4 py-4">
+		<div className="w-8 h-8 rounded-full flex items-center justify-center"></div>
+		<h1 className="text-dark-text text-md font-extrabold">
+			Flow & Clarity
+		</h1>
+		<div className="w-8 h-8 rounded-full flex items-center justify-center"></div>
+	</div>
 );
 
 type JournalEntry = {
-  content: string;
-  date: string;
+	content: string;
+	date: string;
 };
 
 type Plan = "free" | "plus" | "pro";
 
 type Profile = {
-  username?: string;
-  first_name?: string;
-  display_name_preference?: string;
-  plan?: Plan; // ⬅️ add plan on profile
+	username?: string;
+	first_name?: string;
+	display_name_preference?: string;
+	plan?: Plan; // ⬅️ add plan on profile
 };
 
 export default function HomePage() {
-  const router = useRouter();
+	const router = useRouter();
 
-  // Reuse a single Supabase client instance
-  const supabase = useMemo(() => createClient(), []);
+	// Reuse a single Supabase client instance
+	const supabase = useMemo(() => createClient(), []);
 
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [mood, setMood] = useState<string | null>("okay");
-  const [feelings, setFeelings] = useState<string[]>([]);
-  const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(false);
+	const [session, setSession] = useState<Session | null>(null);
+	const [profile, setProfile] = useState<Profile | null>(null);
+	const [mood, setMood] = useState<string | null>("okay");
+	const [feelings, setFeelings] = useState<string[]>([]);
+	const [content, setContent] = useState("");
+	const [loading, setLoading] = useState(false);
 
-  const moodValues = useMemo(() => predefinedMoods.map((m) => m.value), []);
-  const moodLabels = useMemo(() => {
-    return predefinedMoods.reduce((acc, mood) => {
-      acc[mood.value] = mood.label;
-      return acc;
-    }, {} as { [key: string]: string });
-  }, []);
+	const moodValues = useMemo(() => predefinedMoods.map((m) => m.value), []);
+	const moodLabels = useMemo(() => {
+		return predefinedMoods.reduce((acc, mood) => {
+			acc[mood.value] = mood.label;
+			return acc;
+		}, {} as { [key: string]: string });
+	}, []);
 
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
+	const [entries, setEntries] = useState<JournalEntry[]>([]);
 
-  // Determine user plan (default to "free" until profile loads)
-  const userPlan: Plan = (profile?.plan as Plan) || "free";
+	// Determine user plan (default to "free" until profile loads)
+	const userPlan: Plan = (profile?.plan as Plan) || "free";
+	const planReady = profile?.plan !== undefined;
 
-  // ⬇️ Pass plan, userId, and supabase to the upgraded hook
-  const {
-    prompts,
-    isLoading: isAiLoading,
-    error: aiError,
-    generateNewPrompt,
-    canRefresh,
-  } = usePersistentPrompts(entries, {
-    plan: userPlan,
-    userId: session?.user.id,
-    supabase,
-  });
+	// ⬇️ Pass plan, userId, and supabase to the upgraded hook
+	const {
+		prompts,
+		isLoading: isAiLoading,
+		error: aiError,
+		generateNewPrompt,
+		canRefresh,
+		usedCountToday,
+		dailyLimit,
+	} = usePersistentPrompts(entries, {
+		plan: userPlan,
+		userId: session?.user.id,
+		supabase,
+		enabled: !!session && planReady,
+	});
 
-  const {
-    transcript,
-    listening,
-    resetTranscript,
-    browserSupportsSpeechRecognition,
-  } = useSpeechRecognition();
+	const {
+		transcript,
+		listening,
+		resetTranscript,
+		browserSupportsSpeechRecognition,
+	} = useSpeechRecognition();
 
-  const fetchEntries = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("journal_entries")
-      .select("content, created_at")
-      .order("created_at", { ascending: true });
+	const fetchEntries = useCallback(async () => {
+		const { data, error } = await supabase
+			.from("journal_entries")
+			.select("content, created_at")
+			.order("created_at", { ascending: true });
 
-    if (error) {
-      console.error("Error fetching entries:", error);
-      return;
-    }
+		if (error) {
+			console.error("Error fetching entries:", error);
+			return;
+		}
 
-    const formattedEntries: JournalEntry[] = (data ?? []).map((entry) => ({
-      content: entry.content,
-      date: new Date(entry.created_at).toISOString().slice(0, 10),
-    }));
+		const formattedEntries: JournalEntry[] = (data ?? []).map((entry) => ({
+			content: entry.content,
+			date: new Date(entry.created_at).toISOString().slice(0, 10),
+		}));
 
-    setEntries(formattedEntries);
-  }, [supabase]);
+		setEntries(formattedEntries);
+	}, [supabase]);
 
-  useEffect(() => {
-    const fetchSessionAndProfile = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+	useEffect(() => {
+		const fetchSessionAndProfile = async () => {
+			const {
+				data: { session },
+			} = await supabase.auth.getSession();
 
-      if (session) {
-        setSession(session);
-        fetchEntries();
+			if (session) {
+				setSession(session);
+				fetchEntries();
 
-        // ⬇️ also select plan
-        const { data: profileData, error } = await supabase
-          .from("profiles")
-          .select("username, first_name, display_name_preference, plan")
-          .eq("id", session.user.id)
-          .single();
+				// ⬇️ also select plan
+				const { data: profileData, error } = await supabase
+					.from("profiles")
+					.select(
+						"username, first_name, display_name_preference, plan"
+					)
+					.eq("id", session.user.id)
+					.single();
 
-        if (error) {
-          console.error("Error fetching profile:", error.message);
-        } else if (profileData) {
-          setProfile(profileData as Profile);
-        }
-      } else {
-        router.push("/auth");
-      }
-    };
+				if (error) {
+					console.error("Error fetching profile:", error.message);
+				} else if (profileData) {
+					setProfile(profileData as Profile);
+				}
+			} else {
+				router.push("/auth");
+			}
+		};
 
-    fetchSessionAndProfile();
-  }, [router, supabase, fetchEntries]);
+		fetchSessionAndProfile();
+	}, [router, supabase, fetchEntries]);
 
-  useEffect(() => {
-    setFeelings([]);
-  }, [mood]);
+	useEffect(() => {
+		setFeelings([]);
+	}, [mood]);
 
-  useEffect(() => {
-    setContent(transcript);
-  }, [transcript]);
+	useEffect(() => {
+		setContent(transcript);
+	}, [transcript]);
 
-  const handleSaveEntry = async () => {
-    if (!session || !mood) return;
+	const handleSaveEntry = async () => {
+		if (!session || !mood) return;
 
-    setLoading(true);
-    const { error } = await supabase
-      .from("journal_entries")
-      .insert({ mood, feelings, content });
-    setLoading(false);
+		setLoading(true);
+		const { error } = await supabase
+			.from("journal_entries")
+			.insert({ mood, feelings, content });
+		setLoading(false);
 
-    if (error) {
-      notifications.show({ title: "Error", message: error.message, color: "red" });
-    } else {
-      notifications.show({
-        title: "Saved!",
-        message: "Your entry has been recorded.",
-        color: "teal",
-      });
+		if (error) {
+			notifications.show({
+				title: "Error",
+				message: error.message,
+				color: "red",
+			});
+		} else {
+			notifications.show({
+				title: "Saved!",
+				message: "Your entry has been recorded.",
+				color: "teal",
+			});
 
-      setMood("okay");
-      setFeelings([]);
-      setContent("");
-      resetTranscript();
-      fetchEntries();
-    }
-  };
+			setMood("okay");
+			setFeelings([]);
+			setContent("");
+			resetTranscript();
+			fetchEntries();
+		}
+	};
 
-  if (!session) return null;
+	if (!session) return null;
 
-  const availableFeelings = mood ? feelingsByMood[mood] : [];
+	const availableFeelings = mood ? feelingsByMood[mood] : [];
 
-  const handleToggleListening = () => {
-    if (!browserSupportsSpeechRecognition) return;
-    if (listening) {
-      SpeechRecognition.stopListening();
-    } else {
-      resetTranscript();
-      SpeechRecognition.startListening({ continuous: true });
-    }
-  };
+	const handleToggleListening = () => {
+		if (!browserSupportsSpeechRecognition) return;
+		if (listening) {
+			SpeechRecognition.stopListening();
+		} else {
+			resetTranscript();
+			SpeechRecognition.startListening({ continuous: true });
+		}
+	};
 
-  const getDisplayName = () => {
-    if (!profile && session.user?.email) {
-      return session.user.email.split("@")[0];
-    }
-    if (profile?.display_name_preference === "first_name" && profile.first_name) {
-      return profile.first_name;
-    }
-    return (
-      profile?.username ||
-      profile?.first_name ||
-      session.user?.email?.split("@")[0] ||
-      ""
-    );
-  };
-  const displayName = getDisplayName();
+	const getDisplayName = () => {
+		if (!profile && session.user?.email) {
+			return session.user.email.split("@")[0];
+		}
+		if (
+			profile?.display_name_preference === "first_name" &&
+			profile.first_name
+		) {
+			return profile.first_name;
+		}
+		return (
+			profile?.username ||
+			profile?.first_name ||
+			session.user?.email?.split("@")[0] ||
+			""
+		);
+	};
+	const displayName = getDisplayName();
 
-  return (
-    <div className="min-h-screen bg-primary-bg flex flex-col relative pb-28">
-      <Header displayName={displayName} />
+	return (
+		<div className="min-h-screen bg-primary-bg flex flex-col relative pb-28">
+			<Header displayName={displayName} />
 
-      <div className="flex-grow flex flex-col items-center p-4">
-        <MoodWaveSelector3D
-          moods={moodValues}
-          moodLabels={moodLabels}
-          value={mood}
-          onChange={setMood}
-        />
+			<div className="flex-grow flex flex-col items-center p-4">
+				<MoodWaveSelector3D
+					moods={moodValues}
+					moodLabels={moodLabels}
+					value={mood}
+					onChange={setMood}
+				/>
 
-        <motion.div
-          key={mood}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-sm mt-8 flex flex-col gap-4"
-        >
-          <h3 className="text-dark-text text-lg font-semibold text-center">
-            Refine your feelings
-          </h3>
-          <SpecificFeelingsSelector
-            availableFeelings={availableFeelings}
-            value={feelings}
-            onChange={setFeelings}
-          />
-          <AiInsightCard
-            prompts={prompts}
-            isLoading={isAiLoading}
-            error={aiError}
-            canRefresh={canRefresh}
-            onGenerate={() => generateNewPrompt(entries)}
-          />
-          <JournalEditor
-            value={content}
-            onChange={setContent}
-            isListening={listening}
-            onToggleListening={handleToggleListening}
-          />
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full bg-accent-teal text-white py-3 px-6 rounded-lg font-semibold mt-4 transition-colors duration-200 shadow-md hover:bg-opacity-90 disabled:bg-gray-400"
-            onClick={handleSaveEntry}
-            disabled={loading || !mood}
-          >
-            {loading ? "Saving..." : "Save Entry"}
-          </motion.button>
-        </motion.div>
-      </div>
+				<motion.div
+					key={mood}
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ duration: 0.5 }}
+					className="w-full max-w-sm mt-8 flex flex-col gap-4"
+				>
+					<h3 className="text-dark-text text-lg font-semibold text-center">
+						Refine your feelings
+					</h3>
+					<SpecificFeelingsSelector
+						availableFeelings={availableFeelings}
+						value={feelings}
+						onChange={setFeelings}
+					/>
+					<AiInsightCard
+						prompts={prompts}
+						isLoading={isAiLoading}
+						error={aiError}
+						canRefresh={canRefresh}
+						onGenerate={() => generateNewPrompt(entries)}
+						usedCountToday={usedCountToday}
+						dailyLimit={dailyLimit}
+					/>
+					<JournalEditor
+						value={content}
+						onChange={setContent}
+						isListening={listening}
+						onToggleListening={handleToggleListening}
+					/>
+					<motion.button
+						whileHover={{ scale: 1.02 }}
+						whileTap={{ scale: 0.98 }}
+						className="w-full bg-accent-teal text-white py-3 px-6 rounded-lg font-semibold mt-4 transition-colors duration-200 shadow-md hover:bg-opacity-90 disabled:bg-gray-400"
+						onClick={handleSaveEntry}
+						disabled={loading || !mood}
+					>
+						{loading ? "Saving..." : "Save Entry"}
+					</motion.button>
+				</motion.div>
+			</div>
 
-      <BottomNavBar />
-    </div>
-  );
+			<BottomNavBar />
+		</div>
+	);
 }

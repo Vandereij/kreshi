@@ -24,6 +24,7 @@ type Options = {
 	userId?: string;
 	supabase?: SupabaseClient;
 	tableName?: string;
+	enabled?: boolean;
 };
 
 const PLAN_LIMITS: Record<Plan, number> = {
@@ -59,7 +60,13 @@ export const usePersistentPrompts = (
 	entries: JournalEntry[],
 	opts: Options
 ) => {
-	const { plan, userId, supabase, tableName = "user_prompts" } = opts;
+	const {
+		plan,
+		userId,
+		supabase,
+		tableName = "user_prompts",
+		enabled = false,
+	} = opts;
 
 	const [prompts, setPrompts] = useState<string[]>([]);
 	const [usedCountToday, setUsedCountToday] = useState(0); // replaces refreshCount semantics
@@ -79,6 +86,7 @@ export const usePersistentPrompts = (
 	);
 
 	const DAILY_LIMIT = PLAN_LIMITS[plan];
+	const prevPlanRef = useRef<Plan>(plan);
 
 	const loadFromLocal = useCallback(() => {
 		const storedPrompts = localStorage.getItem(PROMPTS_STORAGE_KEY);
@@ -142,6 +150,8 @@ export const usePersistentPrompts = (
 
 	// Init
 	useEffect(() => {
+		if (!enabled) return;
+
 		const init = async () => {
 			if (plan === "free") {
 				loadFromLocal();
@@ -152,9 +162,64 @@ export const usePersistentPrompts = (
 		};
 		init();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [plan, loadFromLocal, loadFromDB]);
+	}, [plan, enabled, loadFromLocal, loadFromDB]);
 
-	const canRefresh = usedCountToday < DAILY_LIMIT && !isLoading;
+	// --- If plan switches from free -> paid, migrate today's local prompts to DB (optional but helpful) ---
+	useEffect(() => {
+		if (!enabled) return;
+
+		const prev = prevPlanRef.current;
+		if (prev === "free" && (plan === "plus" || plan === "pro")) {
+			(async () => {
+				try {
+					// read any local prompts for today
+					const raw = localStorage.getItem(PROMPTS_STORAGE_KEY);
+					const localPrompts: string[] = raw ? JSON.parse(raw) : [];
+					if (localPrompts.length && supabase && userId) {
+						// bulk insert unique prompts not already in DB today
+						const from = startOfTodayUTC().toISOString();
+						const to = endOfTodayUTC().toISOString();
+						const { data: todays, error: readErr } = await supabase
+							.from(tableName)
+							.select("prompt")
+							.eq("user_id", userId)
+							.gte("created_at", from)
+							.lte("created_at", to);
+
+						if (readErr) throw readErr;
+						const already = new Set(
+							(todays ?? []).map((r: any) => r.prompt)
+						);
+						const toInsert = localPrompts
+							.filter((p) => !already.has(p))
+							.map((p) => ({
+								user_id: userId,
+								prompt: p,
+							}));
+						if (toInsert.length) {
+							const { error: insErr } = await supabase
+								.from(tableName)
+								.insert(toInsert);
+							if (insErr) throw insErr;
+						}
+					}
+				} catch (e) {
+					// Non-fatal: keep running even if migration fails
+					console.warn("Prompt migration failed:", e);
+				} finally {
+					// Clear local store for cleanliness
+					localStorage.removeItem(PROMPTS_STORAGE_KEY);
+					localStorage.removeItem(REFRESH_COUNT_STORAGE_KEY);
+					localStorage.removeItem(LAST_VISIT_DATE_KEY);
+					// Reload from DB as source of truth
+					if (supabase && userId) await loadFromDB();
+				}
+			})();
+		}
+		prevPlanRef.current = plan;
+	}, [plan, enabled, supabase, userId, loadFromDB]);
+
+	const canRefresh = enabled && usedCountToday < DAILY_LIMIT && !isLoading;
 
 	const persistPrompt = useCallback(
 		async (newPrompt: string) => {
@@ -205,7 +270,8 @@ export const usePersistentPrompts = (
 
 	const generateNewPrompt = useCallback(
 		async (sourceEntries: JournalEntry[]) => {
-			if (!canRefresh || isLoading || generatingRef.current) return;
+			if (!enabled || !canRefresh || isLoading || generatingRef.current)
+				return;
 
 			generatingRef.current = true;
 			setIsLoading(true);
@@ -266,11 +332,12 @@ export const usePersistentPrompts = (
 				generatingRef.current = false;
 			}
 		},
-		[canRefresh, isLoading, persistPrompt]
+		[enabled, canRefresh, isLoading, persistPrompt]
 	);
 
 	useEffect(() => {
 		if (
+			enabled &&
 			isInitialized &&
 			recentEntries.length > 0 &&
 			prompts.length === 0 &&
@@ -280,6 +347,7 @@ export const usePersistentPrompts = (
 			generateNewPrompt(entries);
 		}
 	}, [
+		enabled,
 		isInitialized,
 		entries,
 		recentEntries.length,
@@ -290,6 +358,8 @@ export const usePersistentPrompts = (
 	]);
 
 	const clearPrompts = useCallback(async () => {
+		if (!enabled) return;
+
 		setPrompts([]);
 		setUsedCountToday(0);
 		setScoredThemes(null);
@@ -309,7 +379,6 @@ export const usePersistentPrompts = (
 		generateNewPrompt,
 		clearPrompts,
 		canRefresh,
-		// Convenience: expose count and limit for UI badges/meters
 		usedCountToday,
 		dailyLimit: DAILY_LIMIT,
 		plan,
