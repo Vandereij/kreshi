@@ -3,16 +3,16 @@ import { NextResponse } from "next/server";
 
 type ThemeScore = { theme: string; score: number };
 
-const MAX_THEMES_IN_PROMPT = 15; // keep the LLM input focused
+const MAX_THEMES_IN_PROMPT = 15;
 
 export async function POST(req: Request) {
 	try {
 		const body = (await req.json()) as {
 			themes?: string[];
 			scoredThemes?: ThemeScore[];
+			mood?: string;
 		};
 
-		// 1) Build a single ordered string[] of themes
 		let orderedThemes: string[] = [];
 
 		if (Array.isArray(body.scoredThemes) && body.scoredThemes.length > 0) {
@@ -24,7 +24,6 @@ export async function POST(req: Request) {
 			orderedThemes = body.themes;
 		}
 
-		// De-dupe and trim
 		const seen = new Set<string>();
 		const compactThemes = orderedThemes.filter((t) => {
 			const key = t.trim().toLowerCase();
@@ -42,16 +41,13 @@ export async function POST(req: Request) {
 			);
 		}
 
-		// 2) Guard: API key
 		if (!process.env.COHERE_API_KEY) {
 			throw new Error("COHERE_API_KEY is not set.");
 		}
 
-		// 3) Prompts
 		const systemPrompt =
 			"You are a supportive journaling assistant. Generate a prompt for a user feeling overwhelmed. **Important Instructions:** * Do not give medical advice. * Do not use stigmatizing language. * Keep the tone gentle and non-judgmental. * If the user expresses severe distress, gently suggest seeking professional help. * Focus on self-reflection and empowerment. * The sentence should be complete, don't return sentences that are interrupted * Max 50 words **Prompt Request:** Create a prompt that helps the user break down their overwhelming feelings into smaller, more manageable parts. **Provide an explanation of how the prompt will help **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
 
-		// Keep it short and clear; order is significance if scoredThemes was provided
 		const userPrompt =
 			`Recent themes (most→least significant): ` +
 			topThemes
@@ -59,7 +55,6 @@ export async function POST(req: Request) {
 				.join(", ") +
 			".";
 
-		// 4) Call Cohere
 		const response = await fetch("https://api.cohere.com/v2/chat", {
 			method: "POST",
 			headers: {

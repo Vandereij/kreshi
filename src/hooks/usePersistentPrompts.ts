@@ -1,7 +1,6 @@
 // src/hooks/usePersistentPrompts.ts
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { extractThemes, type ThemeScore } from "@/lib/themeExtractor";
-import { createClient } from "@/lib/supabase/client";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 const PROMPTS_STORAGE_KEY = "soullog_ai_prompts";
@@ -10,7 +9,6 @@ const LAST_VISIT_DATE_KEY = "soullog_ai_last_visit_date";
 
 const DAYS_LOOKBACK = 7;
 const THEMES_TARGET = 30;
-const supabase = createClient();
 
 type JournalEntry = {
 	content: string;
