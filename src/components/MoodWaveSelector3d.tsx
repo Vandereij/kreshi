@@ -324,7 +324,7 @@ export const MoodWaveSelector3D: React.FC<MoodWaveSelectorProps> = ({
   return (
     <div className="flex flex-col items-center">
       <h2 className="text-[26px] font-extrabold text-dark-text mb-4">
-        Feeling {selectedMoodLabel}
+        Today I'm feeling <span className="lowercase">{selectedMoodLabel}</span>
       </h2>
       <div
         ref={containerRef}
