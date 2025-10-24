@@ -307,7 +307,7 @@ export const usePersistentPrompts = (
 				const response = await fetch("/api/ai/prompts", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ themes, scoredThemes: detailed }),
+					body: JSON.stringify({ themes, scoredThemes: detailed, plan: plan }),
 				});
 
 				if (!response.ok)
