@@ -1,6 +1,7 @@
 // src/hooks/usePersistentPrompts.ts
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { extractThemes, type ThemeScore } from "@/lib/themeExtractor";
+import { analyzeMoodContext } from "@/lib/moodAnalyzer";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 const PROMPTS_STORAGE_KEY = "soullog_ai_prompts";
@@ -12,7 +13,9 @@ const THEMES_TARGET = 30;
 
 type JournalEntry = {
 	content: string;
-	date: string; // ISO string recommended
+	date: string;
+	mood?: string; // Add mood
+	feelings?: string[]; // Add feelings
 };
 
 type Plan = "free" | "plus" | "pro";
@@ -38,6 +41,7 @@ const startOfTodayUTC = () => {
 	d.setUTCHours(0, 0, 0, 0);
 	return d;
 };
+
 const endOfTodayUTC = () => {
 	const d = new Date();
 	d.setUTCHours(23, 59, 59, 999);
@@ -67,15 +71,12 @@ export const usePersistentPrompts = (
 	} = opts;
 
 	const [prompts, setPrompts] = useState<string[]>([]);
-	const [usedCountToday, setUsedCountToday] = useState(0); // replaces refreshCount semantics
+	const [usedCountToday, setUsedCountToday] = useState(0);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [isInitialized, setIsInitialized] = useState(false);
-
-	// 🆕 keep the latest scored themes (for UI/analytics)
 	const [scoredThemes, setScoredThemes] = useState<ThemeScore[] | null>(null);
 
-	// Prevent duplicate in-flight generation
 	const generatingRef = useRef(false);
 
 	const recentEntries = useMemo(
@@ -146,7 +147,6 @@ export const usePersistentPrompts = (
 		setUsedCountToday(todaysPrompts.length);
 	}, [supabase, userId, tableName]);
 
-	// Init
 	useEffect(() => {
 		if (!enabled) return;
 
@@ -159,10 +159,8 @@ export const usePersistentPrompts = (
 			setIsInitialized(true);
 		};
 		init();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [plan, enabled, loadFromLocal, loadFromDB]);
 
-	// --- If plan switches from free -> paid, migrate today's local prompts to DB (optional but helpful) ---
 	useEffect(() => {
 		if (!enabled) return;
 
@@ -170,11 +168,9 @@ export const usePersistentPrompts = (
 		if (prev === "free" && (plan === "plus" || plan === "pro")) {
 			(async () => {
 				try {
-					// read any local prompts for today
 					const raw = localStorage.getItem(PROMPTS_STORAGE_KEY);
 					const localPrompts: string[] = raw ? JSON.parse(raw) : [];
 					if (localPrompts.length && supabase && userId) {
-						// bulk insert unique prompts not already in DB today
 						const from = startOfTodayUTC().toISOString();
 						const to = endOfTodayUTC().toISOString();
 						const { data: todays, error: readErr } = await supabase
@@ -202,27 +198,23 @@ export const usePersistentPrompts = (
 						}
 					}
 				} catch (e) {
-					// Non-fatal: keep running even if migration fails
 					console.warn("Prompt migration failed:", e);
 				} finally {
-					// Clear local store for cleanliness
 					localStorage.removeItem(PROMPTS_STORAGE_KEY);
 					localStorage.removeItem(REFRESH_COUNT_STORAGE_KEY);
 					localStorage.removeItem(LAST_VISIT_DATE_KEY);
-					// Reload from DB as source of truth
 					if (supabase && userId) await loadFromDB();
 				}
 			})();
 		}
 		prevPlanRef.current = plan;
-	}, [plan, enabled, supabase, userId, loadFromDB]);
+	}, [plan, enabled, supabase, userId, loadFromDB, tableName]);
 
 	const canRefresh = enabled && usedCountToday < DAILY_LIMIT;
 
 	const persistPrompt = useCallback(
 		async (newPrompt: string) => {
 			if (plan === "free") {
-				// Local-only
 				setPrompts((prev) => {
 					const exists = prev.includes(newPrompt);
 					const updated = exists ? prev : [...prev, newPrompt];
@@ -236,14 +228,12 @@ export const usePersistentPrompts = (
 				return;
 			}
 
-			// Plus / Pro: insert into DB
 			if (!supabase || !userId) {
 				throw new Error(
 					"Supabase client and userId are required for paid plans."
 				);
 			}
 
-			// Avoid duplicate insert if prompt already exists today
 			if (prompts.includes(newPrompt)) {
 				return;
 			}
@@ -251,7 +241,6 @@ export const usePersistentPrompts = (
 			const { error: dbErr } = await supabase.from(tableName).insert({
 				user_id: userId,
 				prompt: newPrompt,
-				// created_at will default to now() in DB if column has default
 			});
 
 			if (dbErr) {
@@ -286,7 +275,7 @@ export const usePersistentPrompts = (
 			}
 
 			try {
-				// 🧠 Get scored themes (array of { theme, score })
+				// Extract themes
 				const detailed = await extractThemes(
 					recent.map((e) => ({ text: e.content, date: e.date })),
 					DAYS_LOOKBACK,
@@ -304,10 +293,31 @@ export const usePersistentPrompts = (
 
 				setScoredThemes(detailed);
 
+				// Analyze mood context from entries that have mood/feelings
+				const entriesWithMood = recent.filter(
+					(e) => e.mood && e.feelings
+				) as Array<{
+					content: string;
+					date: string;
+					mood: string;
+					feelings: string[];
+				}>;
+
+				const moodContext =
+					entriesWithMood.length > 0
+						? analyzeMoodContext(entriesWithMood)
+						: undefined;
+
+				// Call API with enhanced context
 				const response = await fetch("/api/ai/prompts", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ themes, scoredThemes: detailed, plan: plan }),
+					body: JSON.stringify({
+						themes,
+						scoredThemes: detailed,
+						plan: plan,
+						moodContext, // Pass mood context
+					}),
 				});
 
 				if (!response.ok)
@@ -330,7 +340,7 @@ export const usePersistentPrompts = (
 				generatingRef.current = false;
 			}
 		},
-		[enabled, canRefresh, isLoading, persistPrompt]
+		[enabled, canRefresh, isLoading, persistPrompt, plan]
 	);
 
 	useEffect(() => {
@@ -367,7 +377,7 @@ export const usePersistentPrompts = (
 			localStorage.removeItem(REFRESH_COUNT_STORAGE_KEY);
 			return;
 		}
-	}, [plan]);
+	}, [plan, enabled]);
 
 	return {
 		prompts,

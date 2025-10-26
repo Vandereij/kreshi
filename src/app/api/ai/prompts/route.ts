@@ -3,9 +3,18 @@ import { NextResponse } from "next/server";
 
 type ThemeScore = { theme: string; score: number };
 
-type Plan = "free" | "plus" | "pro";
+// Increased to allow more themes while staying within token limits
+const MAX_THEMES_IN_PROMPT = 30;
+const TOP_THEMES_HIGHLIGHTED = 8; // Highlight more top themes
 
-const MAX_THEMES_IN_PROMPT = 15;
+// New type for mood context
+type MoodContext = {
+	yesterdayMood?: string;
+	yesterdayFeelings?: string[];
+	weekTrend?: "improving" | "declining" | "stable" | "mixed";
+	averageWeekMood?: number; // -2 to 2 scale
+	mostRecurrentFeelings?: Array<{ feeling: string; count: number }>;
+};
 
 export async function POST(req: Request) {
 	try {
@@ -13,11 +22,12 @@ export async function POST(req: Request) {
 			themes?: string[];
 			scoredThemes?: ThemeScore[];
 			plan?: string | null;
+			moodContext?: MoodContext;
 		};
 
 		let orderedThemes: string[] = [];
-
 		const selectedPlan = body.plan;
+		const moodContext = body.moodContext;
 
 		if (Array.isArray(body.scoredThemes) && body.scoredThemes.length > 0) {
 			const sorted = [...body.scoredThemes].sort(
@@ -28,10 +38,25 @@ export async function POST(req: Request) {
 			orderedThemes = body.themes;
 		}
 
+		// Improved deduplication that preserves contextual phrases
 		const seen = new Set<string>();
 		const compactThemes = orderedThemes.filter((t) => {
 			const key = t.trim().toLowerCase();
 			if (!key || seen.has(key)) return false;
+
+			// Check if this theme is a substring of an already selected theme
+			// (e.g., skip "sister" if "my sister" already exists)
+			for (const existing of seen) {
+				if (existing.includes(key) && existing !== key) {
+					return false; // Skip this as it's contained in a longer phrase
+				}
+				if (key.includes(existing) && existing !== key) {
+					// This is a longer version, remove the shorter one
+					seen.delete(existing);
+					break;
+				}
+			}
+
 			seen.add(key);
 			return true;
 		});
@@ -45,20 +70,101 @@ export async function POST(req: Request) {
 			);
 		}
 
-		const systemPrompt =
-			"You are a supportive journaling assistant. Generate a prompt for a user feeling overwhelmed. **Important Instructions:** * Do not give medical advice. * Do not use stigmatizing language. * Keep the tone gentle and non-judgmental. * If the user expresses severe distress, gently suggest seeking professional help. * Focus on self-reflection and empowerment. * The sentence should be complete, don't return sentences that are interrupted * Max 50 words **Prompt Request:** Create a prompt that helps the user break down their overwhelming feelings into smaller, more manageable parts. **Provide an explanation of how the prompt will help **You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**";
+		// Enhanced system prompt with better instructions
+		const systemPrompt = `You are a supportive journaling assistant. Generate a personalized prompt based on the user's recent emotional patterns and journal themes.
 
-		const userPrompt =
-			`Recent themes (most→least significant): ` +
-			topThemes
-				.map((t, i) => (i < 5 ? `**${t}**` : t)) // subtly emphasize top 5
-				.join(", ") +
-			".";
+**Important Instructions:**
+* Do not give medical advice.
+* Do not use stigmatizing language.
+* Keep the tone gentle and non-judgmental.
+* If the user expresses severe distress, gently suggest seeking professional help.
+* Focus on self-reflection and empowerment.
+* The sentence should be complete, don't return sentences that are interrupted.
+* Max 50 words.
+
+**Context Awareness:**
+* Pay special attention to the highlighted (bold) themes as they are most significant.
+* Notice contextual relationships in themes (e.g., "my sister" indicates a family relationship).
+* Tailor the prompt based on their mood trend (improving, declining, stable, or mixed).
+* If declining, offer gentle support and encourage small wins.
+* If improving, acknowledge progress and encourage continued momentum.
+* Reference their most common feelings when relevant.
+* Consider yesterday's mood and feelings to create continuity.
+* Weave multiple related themes together when possible.
+
+**Provide an explanation of how the prompt will help**
+**You must respond with only the raw text of the prompt, without any JSON formatting, quotes, or markdown.**`;
+
+		// Build enhanced user prompt with better theme formatting
+		let userPrompt = `Recent themes (most→least significant):\n`;
+
+		// Group themes by importance
+		const topTier = topThemes.slice(0, TOP_THEMES_HIGHLIGHTED);
+		const secondTier = topThemes.slice(TOP_THEMES_HIGHLIGHTED);
+
+		if (topTier.length > 0) {
+			userPrompt += `**Top themes:** ${topTier.join(", ")}\n`;
+		}
+
+		if (secondTier.length > 0) {
+			userPrompt += `**Other themes:** ${secondTier.join(", ")}\n`;
+		}
+
+		if (moodContext) {
+			userPrompt += "\n**Mood Context:**";
+
+			if (moodContext.yesterdayMood) {
+				userPrompt += `\n- Yesterday's mood: ${moodContext.yesterdayMood}`;
+			}
+
+			if (
+				moodContext.yesterdayFeelings &&
+				moodContext.yesterdayFeelings.length > 0
+			) {
+				userPrompt += `\n- Yesterday's feelings: ${moodContext.yesterdayFeelings.join(
+					", "
+				)}`;
+			}
+
+			if (moodContext.weekTrend) {
+				const trendDescriptions = {
+					improving: "showing improvement over the past week",
+					declining: "showing a decline over the past week",
+					stable: "relatively stable over the past week",
+					mixed: "fluctuating over the past week",
+				};
+				userPrompt += `\n- Week trend: ${
+					trendDescriptions[moodContext.weekTrend]
+				}`;
+			}
+
+			if (
+				moodContext.mostRecurrentFeelings &&
+				moodContext.mostRecurrentFeelings.length > 0
+			) {
+				const topFeelings = moodContext.mostRecurrentFeelings
+					.slice(0, 5)
+					.map((f) => `${f.feeling} (${f.count}x)`)
+					.join(", ");
+				userPrompt += `\n- Most recurrent feelings: ${topFeelings}`;
+			}
+
+			if (typeof moodContext.averageWeekMood === "number") {
+				const moodLabel =
+					moodContext.averageWeekMood >= 1
+						? "positive"
+						: moodContext.averageWeekMood <= -1
+						? "negative"
+						: "neutral";
+				userPrompt += `\n- Average weekly mood: ${moodLabel} (${moodContext.averageWeekMood.toFixed(
+					1
+				)})`;
+			}
+		}
 
 		let response;
 
 		if (selectedPlan === "pro") {
-			// Check for Claude API key
 			if (!process.env.CLAUDE_API_KEY) {
 				throw new Error("CLAUDE_API_KEY is not set.");
 			}
@@ -98,7 +204,6 @@ export async function POST(req: Request) {
 					],
 					temperature: 0.7,
 					max_tokens: 150,
-					// safety_mode: "CONTEXTUAL" | "STRICT" | "OFF"
 				}),
 			});
 		}

@@ -323,7 +323,7 @@ export const MoodWaveSelector3D: React.FC<MoodWaveSelectorProps> = ({
 
   return (
     <div className="flex flex-col items-center">
-      <h2 className="text-[26px] font-extrabold text-dark-text mb-4">
+      <h2 className="text-[24px] font-extrabold text-dark-text mb-4">
         Today I'm feeling <span className="lowercase">{selectedMoodLabel}</span>
       </h2>
       <div

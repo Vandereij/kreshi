@@ -24,7 +24,7 @@ import { feelingsByMood } from "@/data/feelings";
 const Header = ({ displayName }: { displayName: string }) => (
 	<div className="flex justify-between items-center px-4 py-4">
 		<div className="w-8 h-8 rounded-full flex items-center justify-center"></div>
-		<h1 className="text-dark-text text-md font-extrabold">
+		<h1 className="text-neutral-900 text-md font-extrabold">
 			Flow & Clarity
 		</h1>
 		<div className="w-8 h-8 rounded-full flex items-center justify-center"></div>
@@ -34,6 +34,8 @@ const Header = ({ displayName }: { displayName: string }) => (
 type JournalEntry = {
 	content: string;
 	date: string;
+	mood?: string;
+	feelings?: string[];
 };
 
 type Plan = "free" | "plus" | "pro";
@@ -98,7 +100,7 @@ export default function HomePage() {
 	const fetchEntries = useCallback(async () => {
 		const { data, error } = await supabase
 			.from("journal_entries")
-			.select("content, created_at")
+			.select("content, mood, feelings, created_at")
 			.order("created_at", { ascending: true });
 
 		if (error) {
@@ -108,6 +110,8 @@ export default function HomePage() {
 
 		const formattedEntries: JournalEntry[] = (data ?? []).map((entry) => ({
 			content: entry.content,
+			mood: entry.mood,
+			feelings: entry.feelings || [],
 			date: new Date(entry.created_at).toISOString().slice(0, 10),
 		}));
 
@@ -221,7 +225,7 @@ export default function HomePage() {
 		<div className="min-h-screen bg-primary-bg flex flex-col relative pb-28">
 			<Header displayName={displayName} />
 
-			<div className="flex-grow flex flex-col items-center p-4">
+			<div className="flex-grow flex flex-col items-center px-4">
 				<MoodWaveSelector3D
 					moods={moodValues}
 					moodLabels={moodLabels}
