@@ -11,6 +11,7 @@
   package = "@netlify/plugin-nextjs"
 
 [functions]
+  directory = "src/netlify/functions"
   node_bundler = "esbuild"
   external_node_modules = ["sharp"]
   included_files = [
