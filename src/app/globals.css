@@ -5,3 +5,22 @@
 /* and the CSS import in your layout.tsx file. */
 /* You can add truly global, custom CSS overrides here later if needed, */
 /* but for now, it must be clean. */
+
+@import "tailwindcss";
+
+@theme {
+        --color-primary-bg: #F9F7F5;
+        --color-secondary-bg: #FCFAFA; 
+        --color-dark-text: #333333;
+        --color-body-text: #5C5C5C;
+        --color-dimmed-text: #9E9E9E;
+        --color-accent-teal: #7CA1A4;
+        --color-light-teal: #A0B7B9;
+        --color-pale-teal: #B8C9CC;
+
+        --color-mood-awful: #9EB2C7; 
+        --color-mood-bad: #E6A89B;
+        --color-mood-okay: #C6D8D0;
+        --color-mood-good: #F0D680;
+        --color-mood-great: #FCDA9C;
+}

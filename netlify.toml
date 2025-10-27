@@ -11,9 +11,14 @@
   package = "@netlify/plugin-nextjs"
 
 [functions]
+  directory = "src/netlify/functions"
   node_bundler = "esbuild"
   external_node_modules = ["sharp"]
   included_files = [
     "node_modules/sharp/**/*",
     "node_modules/@img/sharp-*/**/*"
   ]
+
+[[scheduled.functions]]
+  name = "generate-weekly-summaries"
+  cron = "0 * * * *"
