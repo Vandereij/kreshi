@@ -5,11 +5,12 @@ import {
 	IconMoodEmpty,
 	IconMoodSad,
 	IconMoodCry,
+	TablerIcon,
 } from "@tabler/icons-react";
 
 // Define a type for our mood objects for better TypeScript safety
 export interface Mood {
-	icon: React.ElementType;
+	icon: TablerIcon;
 	value: string;
 	label: string;
 	color: string;
