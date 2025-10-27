@@ -45,6 +45,8 @@ const theme = createTheme({
         radius: 'xl',
       },
     },
+    TextInput: { styles: { input: { fontSize: 16 } } },
+    Textarea:  { styles: { input: { fontSize: 16 } } },
   },
 });
 
