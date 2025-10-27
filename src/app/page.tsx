@@ -225,7 +225,7 @@ export default function HomePage() {
 		<div className="min-h-screen bg-primary-bg flex flex-col relative pb-28">
 			<Header displayName={displayName} />
 
-			<div className="flex-grow flex flex-col items-center px-4">
+			<div className="grow flex flex-col items-center px-4">
 				<MoodWaveSelector3D
 					moods={moodValues}
 					moodLabels={moodLabels}

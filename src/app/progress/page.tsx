@@ -10,7 +10,7 @@ import {
 	Stack,
 	Box,
 	Loader,
-	Paper
+	Paper,
 } from "@mantine/core";
 import { BottomNavBar } from "@/components/BottomNavBar";
 import { RecentEntriesList } from "@/components/RecentEntriesList";
@@ -77,7 +77,9 @@ export default function ProgressPage() {
 	};
 
 	const handleEntryDeleted = (deletedEntryId: string) => {
-		setAllEntries(prevEntries => prevEntries.filter(entry => entry.id !== deletedEntryId));
+		setAllEntries((prevEntries) =>
+			prevEntries.filter((entry) => entry.id !== deletedEntryId)
+		);
 	};
 
 	if (loading) {

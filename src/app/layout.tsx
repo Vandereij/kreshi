@@ -1,13 +1,13 @@
 // src/app/layout.tsx (Corrected)
 import type { Metadata } from 'next';
-import { Nunito, Manrope } from 'next/font/google';
+import { Inter, Manrope } from 'next/font/google';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import './globals.css';
 import { Providers } from './providers';
 import { MainAppShell } from '@/components/MainAppShell';
 
-const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] });
+const inter = Inter({ subsets: ['latin'], weight: ['400', '600', '700', '800'] });
 const manrope = Manrope({ subsets: ['latin'], weight: ['400', '600', '700', '800'] });
 
 export const metadata: Metadata = {

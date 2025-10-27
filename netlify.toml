@@ -17,3 +17,10 @@
     "node_modules/sharp/**/*",
     "node_modules/@img/sharp-*/**/*"
   ]
+
+[functions]
+  node_bundler = "esbuild"
+
+[[scheduled.functions]]
+  name = "generate-weekly-summaries"
+  cron = "0 * * * *"
