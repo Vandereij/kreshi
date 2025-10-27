@@ -140,8 +140,11 @@ export function detectCrisisKeywords(
  * @returns Relevant crisis resources
  */
 export function getCrisisResources(
-	// categories: CrisisCategory[]
+	categories: CrisisCategory[]
 ): CrisisResources {
+	if (categories.length === 0) {
+		return CRISIS_RESOURCES;
+	}
 	// You can customize this to return different resources based on categories
 	// For now, returning all resources
 	return CRISIS_RESOURCES;
