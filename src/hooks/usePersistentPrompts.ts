@@ -160,7 +160,6 @@ export const usePersistentPrompts = (
 		};
 		init();
 	}, [plan, enabled, loadFromLocal, loadFromDB]);
-
 	useEffect(() => {
 		if (!enabled) return;
 
@@ -173,17 +172,15 @@ export const usePersistentPrompts = (
 					if (localPrompts.length && supabase && userId) {
 						const from = startOfTodayUTC().toISOString();
 						const to = endOfTodayUTC().toISOString();
-						const { data: todays, error: readErr } = await supabase
+						const { data, error: readErr } = await supabase
 							.from(tableName)
 							.select("prompt")
-							.eq("user_id", userId)
 							.gte("created_at", from)
 							.lte("created_at", to);
 
 						if (readErr) throw readErr;
-						const already = new Set(
-							(todays ?? []).map((r: any) => r.prompt)
-						);
+						const todays = (data ?? []) as { prompt: string }[];
+						const already = new Set(todays.map((r) => r.prompt));
 						const toInsert = localPrompts
 							.filter((p) => !already.has(p))
 							.map((p) => ({

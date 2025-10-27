@@ -25,7 +25,7 @@ const Header = ({ displayName }: { displayName: string }) => (
 	<div className="flex justify-between items-center px-4 py-4">
 		<div className="w-8 h-8 rounded-full flex items-center justify-center"></div>
 		<h1 className="text-neutral-900 text-md font-extrabold">
-			Flow & Clarity
+			Welcome, {displayName}!
 		</h1>
 		<div className="w-8 h-8 rounded-full flex items-center justify-center"></div>
 	</div>

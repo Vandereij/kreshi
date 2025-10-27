@@ -7,7 +7,7 @@ import './globals.css';
 import { Providers } from './providers';
 import { MainAppShell } from '@/components/MainAppShell';
 
-const inter = Inter({ subsets: ['latin'], weight: ['400', '600', '700', '800'] });
+// const inter = Inter({ subsets: ['latin'], weight: ['400', '600', '700', '800'] });
 const manrope = Manrope({ subsets: ['latin'], weight: ['400', '600', '700', '800'] });
 
 export const metadata: Metadata = {
