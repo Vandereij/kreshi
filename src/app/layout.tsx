@@ -1,6 +1,6 @@
 // src/app/layout.tsx (Corrected)
 import type { Metadata } from 'next';
-import { Inter, Manrope } from 'next/font/google';
+import { Manrope } from 'next/font/google';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import './globals.css';
