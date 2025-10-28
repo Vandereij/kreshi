@@ -241,4 +241,4 @@ export const handler: Handler = async (event) => {
 	}
 };
 
-export const config = { schedule: '0 22 * * *' };
+export const config = { schedule: '0 0 * * 0' };
