@@ -79,7 +79,8 @@ ${input.entries.map((e) => `- [${e.created_at}] ${e.content}`).join("\n")}
 function weekRangeForUser(nowUtc: DateTime, tz: string) {
 	const local = nowUtc.setZone(tz);
 	// Get last completed Mon–Sun week
-	const mondayThisWeek = local.startOf("week").plus({ days: 1 }); // shift Sun→Mon
+	// Luxon's startOf("week") already returns Monday, so no adjustment needed
+	const mondayThisWeek = local.startOf("week");
 	const start = mondayThisWeek.minus({ weeks: 1 });
 	const end = start.plus({ weeks: 1 }).minus({ seconds: 1 });
 	return {
@@ -97,21 +98,26 @@ function isWithinRunWindow(nowUtc: DateTime, tz: string) {
 	return (d === 7 && h >= 20) || (d === 1 && h < 2);
 }
 
-export const handler: Handler = async () => {
+export const handler: Handler = async (event) => {
 	try {
 		const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE, {
 			auth: { persistSession: false },
 		});
 
+		// Allow bypassing time window check for manual testing
+		const forceRun = event.queryStringParameters?.force === "true";
+
 		const nowUtc = DateTime.utc();
-		const PAGE_SIZE = 200; // keep smaller to avoid timeouts
+		const PAGE_SIZE = 200;
 		let from = 0;
 		let processed = 0;
+		let skipped = 0;
+		let errors = 0;
 
 		for (;;) {
 			const { data: profiles, error } = await supabase
 				.from("profiles")
-				.select("id")
+				.select("id, timezone")
 				.order("id", { ascending: true })
 				.range(from, from + PAGE_SIZE - 1);
 
@@ -121,13 +127,23 @@ export const handler: Handler = async () => {
 			for (const p of profiles) {
 				try {
 					const tz = (p as { id: string; timezone?: string }).timezone || DEFAULT_TZ;
-					if (!isWithinRunWindow(nowUtc, tz)) continue;
+					
+					if (!forceRun && !isWithinRunWindow(nowUtc, tz)) {
+						skipped++;
+						continue;
+					}
 
 					const { utcStart, utcEnd, localStart, localEnd } =
 						weekRangeForUser(nowUtc, tz);
 
 					// idempotency: use a stable ISO date-only start in UTC
 					const weekStartIso = localStart.toUTC().toISO();
+
+					console.log(`Processing user ${p.id}:`, {
+						tz,
+						weekStartIso,
+						range: `${utcStart.toISO()} to ${utcEnd.toISO()}`
+					});
 
 					const { data: existing, error: existingErr } =
 						await supabase
@@ -139,7 +155,11 @@ export const handler: Handler = async () => {
 
 					if (existingErr)
 						throw toError(existingErr, "weekly_summaries.select");
-					if (existing) continue;
+					if (existing) {
+						console.log(`Summary already exists for user ${p.id}`);
+						skipped++;
+						continue;
+					}
 
 					const { data: entries, error: entriesErr } = await supabase
 						.from("journal_entries")
@@ -150,7 +170,14 @@ export const handler: Handler = async () => {
 
 					if (entriesErr)
 						throw toError(entriesErr, "journal_entries.select");
-					if (!entries?.length) continue;
+					
+					if (!entries?.length) {
+						console.log(`No entries found for user ${p.id} in range`);
+						skipped++;
+						continue;
+					}
+
+					console.log(`Found ${entries.length} entries for user ${p.id}`);
 
 					const { summary, model } = await generateWeeklySummaryLLM({
 						entries,
@@ -175,8 +202,10 @@ export const handler: Handler = async () => {
 					if (upsertErr)
 						throw toError(upsertErr, "weekly_summaries.upsert");
 
+					console.log(`Successfully created summary for user ${p.id}`);
 					processed++;
 				} catch (userErr) {
+					errors++;
 					console.error("Process user failed:", {
 						userId: p.id,
 						err: String(userErr),
@@ -190,7 +219,16 @@ export const handler: Handler = async () => {
 
 		return {
 			statusCode: 200,
-			body: JSON.stringify({ ok: true, processed }),
+			body: JSON.stringify({ 
+				ok: true, 
+				processed,
+				skipped,
+				errors,
+				message: processed === 0 && skipped > 0 
+					? "No users within run window. Use ?force=true to bypass time check."
+					: undefined
+			}),
+			headers: { "content-type": "application/json" },
 		};
 	} catch (err) {
 		const e = toError(err);
@@ -203,6 +241,4 @@ export const handler: Handler = async () => {
 	}
 };
 
-// (Optional) If you want cron:
-// export const config = { schedule: '0 0 * * 0' }; // Sundays 00:00
 export const config = { schedule: '0 22 * * *' };
