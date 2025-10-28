@@ -120,7 +120,7 @@ export const handler: Handler = async () => {
 
 			for (const p of profiles) {
 				try {
-					const tz = p.timezone || DEFAULT_TZ;
+					const tz = (p as { id: string; timezone?: string }).timezone || DEFAULT_TZ;
 					if (!isWithinRunWindow(nowUtc, tz)) continue;
 
 					const { utcStart, utcEnd, localStart, localEnd } =
