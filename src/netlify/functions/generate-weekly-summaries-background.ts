@@ -111,7 +111,7 @@ export const handler: Handler = async () => {
 		for (;;) {
 			const { data: profiles, error } = await supabase
 				.from("profiles")
-				.select("id, timezone")
+				.select("id")
 				.order("id", { ascending: true })
 				.range(from, from + PAGE_SIZE - 1);
 
