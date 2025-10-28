@@ -1,4 +1,4 @@
-// lib/themeExtractorHybrid.ts
+// lib/themeExtractor.ts
 import nlp from "compromise";
 
 // -----------------------------

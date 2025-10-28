@@ -2,6 +2,7 @@
 import type { Handler } from "@netlify/functions";
 import { createClient } from "@supabase/supabase-js";
 import { DateTime } from "luxon";
+import { extractThemes } from "../../lib/themeExtractor";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -18,23 +19,30 @@ function toError(e: unknown, hint?: string) {
 	}
 }
 
-// —— LLM wrapper ——
+// —— LLM wrapper (now uses themes instead of raw content) ——
 async function generateWeeklySummaryLLM(input: {
-	entries: { created_at: string; content: string }[];
+	themes: string[];
+	entryCount: number;
+	dateRange: { start: string; end: string };
 	tz: string;
 }) {
 	const prompt = `
-You are a supportive CBT journaling companion. Summarize the user's week (timezone: ${
-		input.tz
-	}):
-- Identify recurring themes, emotions, and triggers
-- Highlight coping skills used and small wins
+You are a supportive CBT journaling companion. Generate a weekly reflection based on the themes extracted from a user's journal entries (timezone: ${input.tz}).
+
+Week: ${input.dateRange.start} to ${input.dateRange.end}
+Number of entries: ${input.entryCount}
+
+Key themes identified:
+${input.themes.map((t, i) => `${i + 1}. ${t}`).join("\n")}
+
+Based on these themes:
+- Identify patterns in emotions, experiences, and triggers
+- Highlight any coping skills or positive developments
 - Offer 2–3 gentle, empowering reflections for the coming week
 - Avoid medical advice or diagnoses
 - Keep it ~180–250 words, cohesive and kind
 
-Entries:
-${input.entries.map((e) => `- [${e.created_at}] ${e.content}`).join("\n")}
+Note: These themes were extracted from the user's private journal entries to protect their privacy.
   `.trim();
 
 	const res = await fetch("https://api.cohere.com/v2/chat", {
@@ -62,11 +70,9 @@ ${input.entries.map((e) => `- [${e.created_at}] ${e.content}`).join("\n")}
 
 	const json = (await res.json()) as CohereChatResponse;
 
-	// Always end up with an array (or empty)
 	const blocks: CohereContentBlock[] =
 		json.message?.content ?? json.choices?.[0]?.message?.content ?? [];
 
-	// Join all text parts safely
 	const text = blocks
 		.filter((b): b is { text: string } => typeof b.text === "string")
 		.map((b) => b.text)
@@ -78,8 +84,6 @@ ${input.entries.map((e) => `- [${e.created_at}] ${e.content}`).join("\n")}
 
 function weekRangeForUser(nowUtc: DateTime, tz: string) {
 	const local = nowUtc.setZone(tz);
-	// Get last completed Mon–Sun week
-	// Luxon's startOf("week") already returns Monday, so no adjustment needed
 	const mondayThisWeek = local.startOf("week");
 	const start = mondayThisWeek.minus({ weeks: 1 });
 	const end = start.plus({ weeks: 1 }).minus({ seconds: 1 });
@@ -104,7 +108,6 @@ export const handler: Handler = async (event) => {
 			auth: { persistSession: false },
 		});
 
-		// Allow bypassing time window check for manual testing
 		const forceRun = event.queryStringParameters?.force === "true";
 
 		const nowUtc = DateTime.utc();
@@ -136,7 +139,6 @@ export const handler: Handler = async (event) => {
 					const { utcStart, utcEnd, localStart, localEnd } =
 						weekRangeForUser(nowUtc, tz);
 
-					// idempotency: use a stable ISO date-only start in UTC
 					const weekStartIso = localStart.toUTC().toISO();
 
 					console.log(`Processing user ${p.id}:`, {
@@ -179,8 +181,35 @@ export const handler: Handler = async (event) => {
 
 					console.log(`Found ${entries.length} entries for user ${p.id}`);
 
+					// ✅ Extract themes instead of sending raw content
+					const entriesWithDate = entries.map(e => ({
+						text: e.content,
+						date: new Date(e.created_at).toISOString().slice(0, 10)
+					}));
+
+					const themes = await extractThemes(
+						entriesWithDate,
+						7, // days to look back
+						20, // max themes
+						{ useEmbeddings: true, detailed: false }
+					);
+
+					if (!themes.length) {
+						console.log(`No themes extracted for user ${p.id}`);
+						skipped++;
+						continue;
+					}
+
+					console.log(`Extracted ${themes.length} themes for user ${p.id}`);
+
+					// ✅ Generate summary from themes only
 					const { summary, model } = await generateWeeklySummaryLLM({
-						entries,
+						themes,
+						entryCount: entries.length,
+						dateRange: {
+							start: localStart.toFormat("yyyy-MM-dd"),
+							end: localEnd.toFormat("yyyy-MM-dd")
+						},
 						tz,
 					});
 
@@ -210,7 +239,6 @@ export const handler: Handler = async (event) => {
 						userId: p.id,
 						err: String(userErr),
 					});
-					// Continue other users
 				}
 			}
 
