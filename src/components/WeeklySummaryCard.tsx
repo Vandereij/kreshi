@@ -139,7 +139,7 @@ export default function WeeklySummaryCardClient({
 							icon={<IconInfoCircle size={18} />}
 							title="No summary text"
 						>
-							A row exists for this week, but it doesn't contain
+							A row exists for this week, but it doesn&apos;t contain
 							any content.
 						</Alert>
 					)}
@@ -162,7 +162,7 @@ function EmptyState() {
 		<Stack gap="md" align="flex-start">
 			<Title order={5}>No weekly summary yet</Title>
 			<Text c="dimmed">
-				We couldn't find a summary for the most recently completed week.
+				We couldn&apos;t find a summary for the most recently completed week.
 			</Text>
 		</Stack>
 	);
