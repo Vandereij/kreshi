@@ -1,6 +1,7 @@
 "use client";
 
 import { DateTime } from "luxon";
+import ReactMarkdown from "react-markdown";
 import {
 	Paper,
 	Title,
@@ -14,14 +15,6 @@ import {
 	Alert,
 } from "@mantine/core";
 import { IconCalendar, IconInfoCircle, IconRefresh } from "@tabler/icons-react";
-
-// CLIENT PRESENTATIONAL COMPONENT (works in both app/ and pages/)
-// --------------------------------------------------------------
-// This file contains a pure client component that renders a weekly summary.
-// It DOES NOT import server-only modules like `next/headers` or your
-// Supabase RSC helpers, so it can safely be used from the pages/ directory.
-// Pass the "summary" data as a prop (via getServerSideProps, an API fetch,
-// or any client data source).
 
 export type WeeklySummaryRow = {
 	id: string;
@@ -40,7 +33,6 @@ interface WeeklySummaryCardProps {
 	summary: WeeklySummaryRow | null;
 	title?: string;
 	showMeta?: boolean;
-	/** Optional callbacks for buttons you render in your page */
 	onGenerate?: () => void | Promise<void>;
 	onRefresh?: () => void | Promise<void>;
 }
@@ -107,27 +99,39 @@ export default function WeeklySummaryCardClient({
 									{summary.entry_count} entries
 								</Badge>
 							)}
-							{summary.model && (
-								<Badge variant="light" color="gray">
-									Model: {summary.model}
-								</Badge>
-							)}
-							{summary.timezone && (
-								<Badge variant="light" color="gray">
-									TZ: {summary.timezone}
-								</Badge>
-							)}
 						</Group>
 					)}
 
 					{summary.summary ? (
-						<Text style={{ whiteSpace: "pre-wrap" }}>
+						<ReactMarkdown
+							components={{
+								p: ({ children }) => <Text mb="sm">{children}</Text>,
+								strong: ({ children }) => <Text component="span" fw={600}>{children}</Text>,
+								em: ({ children }) => <Text component="span" fs="italic">{children}</Text>,
+								ul: ({ children }) => <Stack gap="xs" ml="md" mb="sm">{children}</Stack>,
+								li: ({ children }) => <Text component="li">{children}</Text>,
+								h1: ({ children }) => <Title order={2} mt="md" mb="xs">{children}</Title>,
+								h2: ({ children }) => <Title order={3} mt="md" mb="xs">{children}</Title>,
+								h3: ({ children }) => <Title order={4} mt="sm" mb="xs">{children}</Title>,
+							}}
+						>
 							{summary.summary}
-						</Text>
+						</ReactMarkdown>
 					) : summary.content ? (
-						<Text style={{ whiteSpace: "pre-wrap" }}>
+						<ReactMarkdown
+							components={{
+								p: ({ children }) => <Text mb="sm">{children}</Text>,
+								strong: ({ children }) => <Text component="span" fw={600}>{children}</Text>,
+								em: ({ children }) => <Text component="span" fs="italic">{children}</Text>,
+								ul: ({ children }) => <Stack gap="xs" ml="md" mb="sm">{children}</Stack>,
+								li: ({ children }) => <Text component="li">{children}</Text>,
+								h1: ({ children }) => <Title order={2} mt="md" mb="xs">{children}</Title>,
+								h2: ({ children }) => <Title order={3} mt="md" mb="xs">{children}</Title>,
+								h3: ({ children }) => <Title order={4} mt="sm" mb="xs">{children}</Title>,
+							}}
+						>
 							{summary.content as string}
-						</Text>
+						</ReactMarkdown>
 					) : (
 						<Alert
 							variant="light"
@@ -135,7 +139,7 @@ export default function WeeklySummaryCardClient({
 							icon={<IconInfoCircle size={18} />}
 							title="No summary text"
 						>
-							A row exists for this week, but it doesn’t contain
+							A row exists for this week, but it doesn't contain
 							any content.
 						</Alert>
 					)}
@@ -158,7 +162,7 @@ function EmptyState() {
 		<Stack gap="md" align="flex-start">
 			<Title order={5}>No weekly summary yet</Title>
 			<Text c="dimmed">
-				We couldn’t find a summary for the most recently completed week.
+				We couldn't find a summary for the most recently completed week.
 			</Text>
 		</Stack>
 	);
