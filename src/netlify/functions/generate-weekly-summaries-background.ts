@@ -205,4 +205,4 @@ export const handler: Handler = async () => {
 
 // (Optional) If you want cron:
 // export const config = { schedule: '0 0 * * 0' }; // Sundays 00:00
-export const config = { schedule: "20 21 * * *" };
+export const config = { schedule: '0 22 * * *' };
