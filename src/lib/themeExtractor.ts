@@ -387,7 +387,7 @@ export async function extractThemes(
 		}
 	});
 
-	// --- Step 2: Bigrams AND Trigrams from filtered tokens ---
+	// --- Step 2: Bigrams, Trigrams, AND 4-grams from filtered tokens ---
 	const rawTerms: string[] = doc.terms().out("array"); // ✅ typed
 	const tokens = rawTerms
 		.map((t: string) => t.toLowerCase())
@@ -409,6 +409,15 @@ export async function extractThemes(
 		const theme = tri.join(" ");
 		if (theme.length > 5 && !stopWords.has(theme)) {
 			themeCounts.set(theme, (themeCounts.get(theme) || 0) + 2);
+		}
+	});
+
+	// 4-grams for maximum precision
+	const fourgrams = generateNgrams(tokens, 4);
+	fourgrams.forEach((four: string[]) => {
+		const theme = four.join(" ");
+		if (theme.length > 7 && !stopWords.has(theme)) {
+			themeCounts.set(theme, (themeCounts.get(theme) || 0) + 3);
 		}
 	});
 
@@ -486,8 +495,10 @@ export async function extractThemes(
 		const freqN = s.freq / maxFreq;
 		const covN = s.entries.size / maxCov;
 		const recN = s.recencyWeighted / maxRec;
+		// Length bonus: favor longer, more specific phrases
+		const lengthBonus = Math.log(t.split(/\s+/).length + 1) + 1;
 		// Adjusted weights: favor frequency slightly less, coverage more
-		score.set(t, 0.3 * freqN + 0.4 * covN + 0.3 * recN);
+		score.set(t, (0.3 * freqN + 0.4 * covN + 0.3 * recN) * lengthBonus);
 	}
 
 	// === MMR diversity ===
@@ -578,9 +589,40 @@ export async function extractThemes(
 		(t) => t.length > 2 && !stopWords.has(t) && !/^\d+$/.test(t)
 	);
 
+	// === Enhanced precision: filter generic terms and substrings ===
+	const genericWords = new Set([
+		'time', 'thing', 'things', 'way', 'ways', 'people', 'person', 
+		'something', 'someone', 'lot', 'bit', 'stuff', 'kind', 'sort'
+	]);
+
+	// Remove overly generic themes
+	const nonGeneric = filtered.filter(theme => {
+		const words = theme.split(/\s+/);
+		// Keep if not all words are generic
+		return !words.every(w => genericWords.has(w));
+	});
+
+	// Remove substring duplicates: prefer longer, more specific phrases
+	const preciseThemes = nonGeneric.filter((theme, idx) => {
+		const thisFreq = stats.get(theme)?.freq || 0;
+		const thisScore = score.get(theme) || 0;
+		
+		// Keep if no other theme contains this as substring with similar/better metrics
+		return !nonGeneric.some((other, otherIdx) => {
+			if (idx === otherIdx) return false;
+			const otherFreq = stats.get(other)?.freq || 0;
+			const otherScore = score.get(other) || 0;
+			
+			// If 'other' contains 'theme' and has similar/better frequency AND score
+			return other.includes(theme) && 
+				   otherFreq >= thisFreq * 0.7 && 
+				   otherScore >= thisScore * 0.7;
+		});
+	});
+
 	// Return shape by `detailed` flag (overloads ensure proper typing)
 	if (opts.detailed) {
-		return filtered.map((t) => ({ theme: t, score: score.get(t) ?? 0 }));
+		return preciseThemes.map((t) => ({ theme: t, score: score.get(t) ?? 0 }));
 	}
-	return filtered;
+	return preciseThemes;
 }
