@@ -5,14 +5,8 @@ precision highp int;
 #endif
 
 uniform float time;
-uniform vec3  color1;
-uniform vec3  color2;
-uniform vec3  color3;
-uniform vec3  color4;
-
-// Tunables
-uniform float shadowStrength; // 0.0–1.0
-uniform float shadowSoftness; // 0.0–1.0
+uniform vec3  color1, color2, color3, color4;
+uniform float shadowStrength, shadowSoftness;
 uniform bool  debugShadow;
 
 varying highp vec2 vUv;
@@ -51,9 +45,9 @@ void main() {
   float bands = 0.5 + 0.5 * sin(qy + 0.25 * sin(qx + t * 0.35));
   bands = smoothstep(0.15, 0.85, pow(bands, 1.8));
 
-  // secondary microflow for shimmer
+  // secondary microflow for shimmer (reduced for matte look)
   float micro = 0.5 + 0.5 * sin(6.0 * (uv.x + uv.y) + t * 1.2 + warp * 0.5);
-  float flowPattern = clamp(mix(bands, micro, 0.35), 0.0, 1.0);
+  float flowPattern = clamp(mix(bands, micro, 0.15), 0.0, 1.0); // reduced from 0.35 to 0.15
 
   // --- palette across 4 colors (branchless, segment-consistent) ---
   // Map flowPattern in [0,1] to 4 segments of length 0.25
@@ -83,37 +77,35 @@ void main() {
       m2 * mix(color2, color3, k2) +
       m3 * mix(color3, color1, k3);
 
-  // dynamic luminance lift (silk sheen)
-  float lift = 0.55 + 0.45 * pow(0.5 + 0.5 * sin(qy * 0.8 + t * 0.4), 3.0);
+  // dynamic luminance lift (reduced for matte look)
+  float lift = 0.70 + 0.30 * pow(0.5 + 0.5 * sin(qy * 0.8 + t * 0.4), 2.0); // flatter curve
   vec3 silk = baseColor * lift;
 
-  // --- iridescence via fresnel-driven hue travel ---
-  float F = pow(1.0 - abs(dot(n, v)), 2.0); // fresnel term
+  // --- reduced iridescence for matte look ---
+  float F = pow(1.0 - abs(dot(n, v)), 3.5); // softer fresnel (was 2.0)
   vec3 iriA = mix(color2, color3, 0.5 + 0.5 * sin(t * 0.5 + warp * 0.2));
   vec3 iriB = mix(color1, color4, 0.5 + 0.5 * cos(t * 0.4 + qx * 0.7));
   vec3 iridescence = mix(iriA, iriB, 0.5 + 0.5 * sin(qy * 0.5 + t * 0.6));
-  vec3 coat = mix(silk, iridescence, clamp(F * 0.85, 0.0, 1.0));
+  vec3 coat = mix(silk, iridescence, clamp(F * 0.25, 0.0, 1.0)); // reduced from 0.85 to 0.25
 
-  // --- lighting: diffuse, specular (Blinn), and rim ---
+  // --- matte lighting: mostly diffuse, minimal specular ---
   float ndl = max(dot(n, l), 0.0);
   vec3  h   = normalize(l + v);
-  float spec = pow(max(dot(n, h), 0.0), 72.0);
+  float spec = pow(max(dot(n, h), 0.0), 120.0); // increased power for tighter, subtler highlight
 
-  // subtle sparkles (procedural flicker, filtered by ndl)
-  float sparkle = 0.5 + 0.5 * sin(20.0 * (uv.x + uv.y) + t * 3.0 + warp * 1.5);
-  sparkle *= 0.25 + 0.75 * ndl;
-  float specMix = mix(spec, spec * (0.7 + 0.3 * sparkle), 0.8);
+  // remove sparkles for matte look
+  float specMix = spec * 0.15; // greatly reduced specular intensity
 
-  float rim = pow(1.0 - abs(dot(n, v)), 3.0);
+  float rim = pow(1.0 - abs(dot(n, v)), 4.0) * 0.08; // softer, subtler rim
 
   // soft ambient wrap to keep depth without flattening
-  float wrap = clamp((ndl + 0.35) / (1.0 + 0.35), 0.0, 1.0);
+  float wrap = clamp((ndl + 0.45) / (1.0 + 0.45), 0.0, 1.0); // more ambient fill
 
-  vec3 lit = coat * (0.35 + 0.85 * wrap) + specMix * (0.35 + 0.65 * bands) + rim * 0.25;
+  vec3 lit = coat * (0.55 + 0.45 * wrap) + specMix * (0.2 + 0.3 * bands) + rim; // reduced specular influence
 
-  // gentle tone shaping
+  // gentle tone shaping (reduced for flatter matte look)
   vec3 finalColor = lit;
-  finalColor = mix(finalColor, finalColor * finalColor, 0.2); // soft contrast curve
+  finalColor = mix(finalColor, finalColor * finalColor, 0.08); // reduced contrast curve
 
   // ---------- bottom shadow mask (view-space) ----------
   float down = clamp(-n.y, 0.0, 1.0);
