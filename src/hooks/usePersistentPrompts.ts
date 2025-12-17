@@ -277,7 +277,7 @@ export const usePersistentPrompts = (
 					recent.map((e) => ({ text: e.content, date: e.date })),
 					DAYS_LOOKBACK,
 					THEMES_TARGET,
-					{ detailed: true, useEmbeddings: true }
+					{ detailed: true, useEmbeddings: true, includeCbtMetadata: true  }
 				);
 				const themes = detailed.map((t) => t.theme);
 
